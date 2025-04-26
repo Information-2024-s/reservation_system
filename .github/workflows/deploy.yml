@@ -14,8 +14,8 @@ jobs:
       - name: Checkout to the branch
         uses: actions/checkout@v2
 
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST_VPS }}
           username: ${{ secrets.USERNAME_VPS }}
