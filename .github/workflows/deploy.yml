@@ -1,0 +1,29 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - release/production
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to VPS
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_VPS }}
+          username: ${{ secrets.USERNAME_VPS }}
+          key: ${{ secrets.SSH_KEY_VPS }}
+          script: |
+            cd ~/reservation_system
+            git pull
+            npm install
+            npm run build
+            pm2 del app || true
+            pm2 start 'npm start' --name app
