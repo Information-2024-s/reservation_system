@@ -18,7 +18,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST_VPS }}
-          username: ${{ secrets.USERNAME_VPS }}
+          username: ubuntu
           key: ${{ secrets.SSH_KEY_VPS }}
           script: |
             cd ~/reservation_system
