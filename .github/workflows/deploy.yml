@@ -18,7 +18,7 @@ jobs:
         run: echo "${{ secrets.SSH_KEY_VPS }}"
 
       - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@v@v1.2.2
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: 163.43.183.250
           username: ubuntu
