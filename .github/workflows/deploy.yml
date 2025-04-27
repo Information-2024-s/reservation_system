@@ -14,14 +14,11 @@ jobs:
       - name: Checkout to the branch
         uses: actions/checkout@v2
 
-      - name: echo a secret
-        run: echo "${{ secrets.SSH_KEY_VPS }}"
-
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@v1.2.2
         with:
-          host: 163.43.183.250
-          username: ubuntu
+          host: ${{ secrets.HOST_VPS }}
+          username: ${{ secrets.USERNAME_VPS }}
           key: ${{ secrets.SSH_KEY_VPS }}
           script: |
             cd ~/reservation_system
