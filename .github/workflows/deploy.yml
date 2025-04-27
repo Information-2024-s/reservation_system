@@ -18,10 +18,10 @@ jobs:
         run: echo "${{ secrets.SSH_KEY_VPS }}"
 
       - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v@v1.2.2
         with:
-          host: ${{ secrets.HOST_VPS }}
-          username: ${{ secrets.USERNAME_VPS }}
+          host: 163.43.183.250
+          username: ubuntu
           key: ${{ secrets.SSH_KEY_VPS }}
           script: |
             cd ~/reservation_system
