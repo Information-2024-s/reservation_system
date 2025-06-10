@@ -28,6 +28,7 @@ export default function LiffProvider({ children }: { children: ReactNode }) {
       .then((liff) => liff.default)
       .then((liff) => {
         console.log("LIFF init...");
+        console.log(process.env.NEXT_PUBLIC_LIFF_ID);
         liff
           .init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! })
           .then(() => {

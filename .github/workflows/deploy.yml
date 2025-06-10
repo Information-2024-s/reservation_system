@@ -22,7 +22,7 @@ jobs:
           key: ${{ secrets.SSH_KEY_VPS }}
           script: |
             cd ~/reservation_system
-            ls
+            echo "NEXT_PUBLIC_LIFF_ID=${{ secrets.NEXT_PUBLIC_LIFF_ID }}" > .env
             git pull
             npm install
             npm run build
