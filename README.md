@@ -1,36 +1,218 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 予約システム API
 
-## Getting Started
+このプロジェクトは、Prisma を使用した予約システムの API です。
 
-First, run the development server:
+## セットアップ
+
+1. 依存関係のインストール
+
+```bash
+npm install
+```
+
+2. 環境変数の設定
+   `.env`ファイルを作成し、以下の内容を追加してください：
+
+```
+DATABASE_URL="postgresql://postgres:password@localhost:5432/mydb"
+```
+
+3. データベースのマイグレーション
+
+```bash
+npx prisma migrate dev
+```
+
+4. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API エンドポイント
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ユーザー管理
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### 全ユーザー取得
 
-## Learn More
+```
+GET /api/users
+```
 
-To learn more about Next.js, take a look at the following resources:
+#### ユーザー作成
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+POST /api/users
+Content-Type: application/json
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+{
+  "name": "田中太郎"
+}
+```
 
-## Deploy on Vercel
+#### 特定のユーザー取得
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+GET /api/users/{id}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+#### ユーザー更新
+
+```
+PUT /api/users/{id}
+Content-Type: application/json
+
+{
+  "name": "田中次郎"
+}
+```
+
+#### ユーザー削除
+
+```
+DELETE /api/users/{id}
+```
+
+### スコア管理
+
+#### 全スコア取得
+
+```
+GET /api/scores
+```
+
+#### スコア作成
+
+```
+POST /api/scores
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "score": 85
+}
+```
+
+#### 特定のスコア取得
+
+```
+GET /api/scores/{id}
+```
+
+#### スコア更新
+
+```
+PUT /api/scores/{id}
+Content-Type: application/json
+
+{
+  "score": 90
+}
+```
+
+#### スコア削除
+
+```
+DELETE /api/scores/{id}
+```
+
+### 予約管理
+
+#### 全予約取得
+
+```
+GET /api/reservations
+```
+
+#### 予約作成
+
+```
+POST /api/reservations
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "receiptNumber": "R001",
+  "numberOfPeople": 4,
+  "startTime": "2024-01-15T18:00:00Z",
+  "endTime": "2024-01-15T20:00:00Z"
+}
+```
+
+#### 特定の予約取得
+
+```
+GET /api/reservations/{id}
+```
+
+#### 予約更新
+
+```
+PUT /api/reservations/{id}
+Content-Type: application/json
+
+{
+  "receiptNumber": "R002",
+  "numberOfPeople": 6,
+  "startTime": "2024-01-15T19:00:00Z",
+  "endTime": "2024-01-15T21:00:00Z"
+}
+```
+
+#### 予約削除
+
+```
+DELETE /api/reservations/{id}
+```
+
+### 関連データ取得
+
+#### 特定のユーザーのスコア取得
+
+```
+GET /api/users/scores?userId={userId}
+```
+
+#### 特定のユーザーの予約取得
+
+```
+GET /api/users/reservations?userId={userId}
+```
+
+## データベーススキーマ
+
+### User
+
+- `id`: 主キー（自動増分）
+- `name`: ユーザー名
+- `createdAt`: 作成日時
+- `updatedAt`: 更新日時
+
+### Score
+
+- `id`: 主キー（自動増分）
+- `userId`: ユーザー ID（外部キー）
+- `score`: スコア
+- `createdAt`: 作成日時
+- `updatedAt`: 更新日時
+
+### Reservation
+
+- `id`: 主キー（自動増分）
+- `userId`: ユーザー ID（外部キー）
+- `receiptNumber`: 受付番号
+- `numberOfPeople`: 人数
+- `startTime`: 開始時刻
+- `endTime`: 終了時刻
+- `createdAt`: 作成日時
+- `updatedAt`: 更新日時
+
+## エラーハンドリング
+
+すべての API エンドポイントは適切な HTTP ステータスコードとエラーメッセージを返します：
+
+- `200`: 成功
+- `201`: 作成成功
+- `400`: バリデーションエラー
+- `404`: リソースが見つかりません
+- `500`: サーバーエラー
