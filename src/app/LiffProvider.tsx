@@ -8,11 +8,13 @@ import type { ReactNode } from "react";
 type LiffContextType = {
   liff: Liff | null;
   liffError: string | null;
+  isLoggedIn: boolean | null;
 };
 
 const LiffContext = createContext<LiffContextType>({
   liff: null,
   liffError: null,
+  isLoggedIn: null,
 });
 
 export const useLiff = () => useContext(LiffContext);
@@ -48,7 +50,7 @@ export default function LiffProvider({ children }: { children: ReactNode }) {
   const officialAccountUrl = "https://lin.ee/xxxxxx";
 
   return (
-    <LiffContext.Provider value={{ liff: liffObject, liffError }}>
+    <LiffContext.Provider value={{ liff: liffObject, liffError, isLoggedIn }}>
       {/* ログイン状態が未判定またはLIFF初期化中は何も表示しない */}
       {isLoggedIn === false ? (
         <div

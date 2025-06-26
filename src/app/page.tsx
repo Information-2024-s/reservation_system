@@ -2,8 +2,11 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
+import { useLiff } from "./LiffProvider";
 
 export default function Home() {
+  const { isLoggedIn } = useLiff();
+
   useEffect(() => {
     // ハンバーガーメニューのクリックイベント
     const hamburger = document.querySelector(".humburger");
@@ -41,26 +44,29 @@ export default function Home() {
   return (
     <>
       <div className="background"></div>
-      <div className="frame-7">
-        <div className="frame-6">
-          <div className="line">
-            <span>
-              <span className="line-span">
-                予約はこちらから！
-                <br />
+      {/* 予約ボタンはLIFFログイン済みのときだけ表示 */}
+      {isLoggedIn && (
+        <div className="frame-7">
+          <div className="frame-6">
+            <div className="line">
+              <span>
+                <span className="line-span">
+                  予約はこちらから！
+                  <br />
+                </span>
+                <span className="line-span2">（公式LINEに移動します）</span>
               </span>
-              <span className="line-span2">（公式LINEに移動します）</span>
-            </span>
+            </div>
+            <Image
+              className="frame"
+              src="./frame0.svg"
+              alt="予約アイコン"
+              width={24}
+              height={24}
+            />
           </div>
-          <Image
-            className="frame"
-            src="./frame0.svg"
-            alt="予約アイコン"
-            width={24}
-            height={24}
-          />
         </div>
-      </div>
+      )}
 
       <header>
         <div className="header">
