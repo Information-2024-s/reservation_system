@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useLiff } from './LiffProvider';
+import { useLiff } from "../../LiffProvider";
 import Image from "next/image";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function LiffContent() {
   const { liff, liffError } = useLiff();
@@ -11,11 +11,12 @@ export default function LiffContent() {
   useEffect(() => {
     if (liff && liff.isLoggedIn()) {
       // Fetch profile data if user is logged in
-      liff.getProfile()
-        .then(userProfile => {
+      liff
+        .getProfile()
+        .then((userProfile) => {
           setProfile(userProfile);
         })
-        .catch(err => console.error("Error getting profile:", err));
+        .catch((err) => console.error("Error getting profile:", err));
     }
   }, [liff]);
 
@@ -28,7 +29,7 @@ export default function LiffContent() {
   }
 
   const isLoggedIn = liff.isLoggedIn();
-  
+
   const handleLogin = () => {
     if (!isLoggedIn) {
       liff.login();
@@ -53,20 +54,20 @@ export default function LiffContent() {
           height={38}
           priority
         />
-        
+
         <div className="flex flex-col gap-4 w-full">
           <h2 className="text-xl font-bold">LIFF Status</h2>
           <div className="bg-black/[.05] dark:bg-white/[.06] p-4 rounded font-[family-name:var(--font-geist-mono)] text-sm">
-            <p>LIFF initialized: {liff ? 'Yes' : 'No'}</p>
-            <p>Logged in: {isLoggedIn ? 'Yes' : 'No'}</p>
+            <p>LIFF initialized: {liff ? "Yes" : "No"}</p>
+            <p>Logged in: {isLoggedIn ? "Yes" : "No"}</p>
             {isLoggedIn && (
               <div className="mt-2">
                 <p>User ID: {liff.getDecodedIDToken()?.sub}</p>
-                <p>Display Name: {profile?.displayName || 'Loading...'}</p>
+                <p>Display Name: {profile?.displayName || "Loading..."}</p>
               </div>
             )}
           </div>
-          
+
           <div className="flex gap-4 mt-4">
             {!isLoggedIn ? (
               <button

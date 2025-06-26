@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import LiffProvider from "./LiffProvider";
 
 export const metadata: Metadata = {
   title: "顔シューティング（仮）",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <LiffProvider>{children}</LiffProvider>
+      </body>
     </html>
   );
 }
