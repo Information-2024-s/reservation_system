@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 // GET /api/scores/[id] - 特定のスコア取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const score = await prisma.score.findUnique({
-      where: { id },
+      where: { id: idNum },
       include: {
         user: true,
       },
@@ -34,10 +35,11 @@ export async function GET(
 // PUT /api/scores/[id] - スコア更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const body = await request.json();
     const { score } = body;
 
@@ -46,7 +48,7 @@ export async function PUT(
     }
 
     const scoreRecord = await prisma.score.update({
-      where: { id },
+      where: { id: idNum },
       data: { score: parseInt(score) },
       include: {
         user: true,
@@ -65,12 +67,13 @@ export async function PUT(
 // DELETE /api/scores/[id] - スコア削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     await prisma.score.delete({
-      where: { id },
+      where: { id: idNum },
     });
 
     return NextResponse.json({ message: "スコアを削除しました" });

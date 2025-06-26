@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 // GET /api/reservations/[id] - 特定の予約取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const reservation = await prisma.reservation.findUnique({
-      where: { id },
+      where: { id: idNum },
       include: {
         user: true,
       },
@@ -34,10 +35,11 @@ export async function GET(
 // PUT /api/reservations/[id] - 予約更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const body = await request.json();
     const { receiptNumber, numberOfPeople, startTime, endTime } = body;
 
@@ -49,7 +51,7 @@ export async function PUT(
     }
 
     const reservation = await prisma.reservation.update({
-      where: { id },
+      where: { id: idNum },
       data: {
         receiptNumber,
         numberOfPeople: parseInt(numberOfPeople),
@@ -73,12 +75,13 @@ export async function PUT(
 // DELETE /api/reservations/[id] - 予約削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     await prisma.reservation.delete({
-      where: { id },
+      where: { id: idNum },
     });
 
     return NextResponse.json({ message: "予約を削除しました" });

@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 // GET /api/users/[id] - 特定のユーザー取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id: idNum },
       include: {
         scores: true,
         reservations: true,
@@ -35,10 +36,11 @@ export async function GET(
 // PUT /api/users/[id] - ユーザー更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     const body = await request.json();
     const { name } = body;
 
@@ -47,7 +49,7 @@ export async function PUT(
     }
 
     const user = await prisma.user.update({
-      where: { id },
+      where: { id: idNum },
       data: { name },
       include: {
         scores: true,
@@ -67,12 +69,13 @@ export async function PUT(
 // DELETE /api/users/[id] - ユーザー削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const idNum = parseInt(id);
     await prisma.user.delete({
-      where: { id },
+      where: { id: idNum },
     });
 
     return NextResponse.json({ message: "ユーザーを削除しました" });
