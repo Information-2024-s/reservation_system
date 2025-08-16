@@ -24,7 +24,7 @@ jobs:
             cd ~/reservation_system
             echo "NEXT_PUBLIC_LIFF_ID=${{ secrets.NEXT_PUBLIC_LIFF_ID }}" > .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-            git pull
+            git pull origin release/production
             npm install
             npx prisma migrate deploy
             npx prisma generate
