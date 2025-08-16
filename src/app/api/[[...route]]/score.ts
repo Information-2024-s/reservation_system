@@ -1,8 +1,19 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { prisma } from '../../../lib/prisma';
 import { score, createScore, updateScore, idParam } from './zod_objects';
+import { z } from 'zod';
 
 const app = new OpenAPIHono();
+
+// ランキング用のスキーマ定義
+const rankingItem = z.object({
+  rank: z.number(),
+  id: z.number(),
+  name: z.string(),
+  score: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 // スコア一覧取得ルート
 const getScoresRoute = createRoute({
@@ -10,6 +21,11 @@ const getScoresRoute = createRoute({
     method: 'get',
     tags: ['Scores'],
     summary: 'スコア一覧を取得',
+    request: {
+        query: z.object({
+            limit: z.string().optional().default('5').transform(val => parseInt(val, 10)),
+        }),
+    },
     responses: {
         200: {
             description: 'OK',
@@ -23,8 +39,11 @@ const getScoresRoute = createRoute({
 });
 
 app.openapi(getScoresRoute, async (c) => {
+    const { limit } = c.req.valid('query');
+    
     const scores = await prisma.score.findMany({
         orderBy: { createdAt: 'desc' },
+        take: limit,
     });
     
     const formattedScores = scores.map(score => ({
@@ -187,5 +206,7 @@ app.openapi(deleteScoreRoute, async (c) => {
     
     return c.body(null, 204);
 });
+
+
 
 export default app;

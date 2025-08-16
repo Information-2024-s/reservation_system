@@ -4,12 +4,12 @@ import { team, createTeam, updateTeam, idParam } from './zod_objects';
 
 const app = new OpenAPIHono();
 
-// ユーザー一覧取得ルート
-const getUsersRoute = createRoute({
+// チーム一覧取得ルート
+const getTeamsRoute = createRoute({
     path: '/',
     method: 'get',
-    tags: ['Users'],
-    summary: 'ユーザー一覧を取得',
+    tags: ['Teams'],
+    summary: 'チーム一覧を取得',
     responses: {
         200: {
             description: 'OK',
@@ -22,26 +22,26 @@ const getUsersRoute = createRoute({
     },
 });
 
-app.openapi(getUsersRoute, async (c) => {
-    const users = await prisma.team.findMany({
+app.openapi(getTeamsRoute, async (c) => {
+    const teams = await prisma.team.findMany({
         orderBy: { createdAt: 'desc' },
     });
-    
-    const formattedUsers = users.map((user) => ({
-        ...user,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
+
+    const formattedTeams = teams.map((team) => ({
+        ...team,
+        createdAt: team.createdAt.toISOString(),
+        updatedAt: team.updatedAt.toISOString(),
     }));
-    
-    return c.json(formattedUsers);
+
+    return c.json(formattedTeams);
 });
 
-// ユーザー詳細取得ルート  
-const getUserRoute = createRoute({
+// チーム詳細取得ルート
+const getTeamRoute = createRoute({
     path: '/{id}',
     method: 'get',
-    tags: ['Users'],
-    summary: 'ユーザー詳細を取得',
+    tags: ['Teams'],
+    summary: 'チーム詳細を取得',
     request: {
         params: idParam,
     },
@@ -57,28 +57,28 @@ const getUserRoute = createRoute({
     },
 });
 
-app.openapi(getUserRoute, async (c) => {
+app.openapi(getTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
-    
-    const userRecord = await prisma.team.findUnique({
+
+    const teamRecord = await prisma.team.findUnique({
         where: { id },
     });
-    
-    const formattedUser = {
-        ...userRecord!,
-        createdAt: userRecord!.createdAt.toISOString(),
-        updatedAt: userRecord!.updatedAt.toISOString(),
+
+    const formattedTeam = {
+        ...teamRecord!,
+        createdAt: teamRecord!.createdAt.toISOString(),
+        updatedAt: teamRecord!.updatedAt.toISOString(),
     };
-    
-    return c.json(formattedUser);
+
+    return c.json(formattedTeam);
 });
 
-// ユーザー作成ルート
-const createUserRoute = createRoute({
+// チーム作成ルート
+const createTeamRoute = createRoute({
     path: '/',
     method: 'post',
-    tags: ['Users'],
-    summary: 'ユーザーを作成',
+    tags: ['Teams'],
+    summary: 'チームを作成',
     request: {
         body: {
             content: {
@@ -100,28 +100,28 @@ const createUserRoute = createRoute({
     },
 });
 
-app.openapi(createUserRoute, async (c) => {
+app.openapi(createTeamRoute, async (c) => {
     const data = c.req.valid('json');
-    
-    const newUser = await prisma.team.create({
+
+    const newTeam = await prisma.team.create({
         data,
     });
-    
-    const formattedUser = {
-        ...newUser,
-        createdAt: newUser.createdAt.toISOString(),
-        updatedAt: newUser.updatedAt.toISOString(),
+
+    const formattedTeam = {
+        ...newTeam,
+        createdAt: newTeam.createdAt.toISOString(),
+        updatedAt: newTeam.updatedAt.toISOString(),
     };
-    
-    return c.json(formattedUser, 201);
+
+    return c.json(formattedTeam, 201);
 });
 
-// ユーザー更新ルート
-const updateUserRoute = createRoute({
+// チーム更新ルート
+const updateTeamRoute = createRoute({
     path: '/{id}',
-    method: 'patch', 
-    tags: ['Users'],
-    summary: 'ユーザーを更新',
+    method: 'patch',
+    tags: ['Teams'],
+    summary: 'チームを更新',
     request: {
         params: idParam,
         body: {
@@ -144,30 +144,30 @@ const updateUserRoute = createRoute({
     },
 });
 
-app.openapi(updateUserRoute, async (c) => {
+app.openapi(updateTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
     const data = c.req.valid('json');
-    
-    const updatedUser = await prisma.team.update({
+
+    const updatedTeam = await prisma.team.update({
         where: { id },
         data,
     });
-    
-    const formattedUser = {
-        ...updatedUser,
-        createdAt: updatedUser.createdAt.toISOString(),
-        updatedAt: updatedUser.updatedAt.toISOString(),
+
+    const formattedTeam = {
+        ...updatedTeam,
+        createdAt: updatedTeam.createdAt.toISOString(),
+        updatedAt: updatedTeam.updatedAt.toISOString(),
     };
-    
-    return c.json(formattedUser);
+
+    return c.json(formattedTeam);
 });
 
-// ユーザー削除ルート
-const deleteUserRoute = createRoute({
+// チーム削除ルート
+const deleteTeamRoute = createRoute({
     path: '/{id}',
     method: 'delete',
-    tags: ['Users'],
-    summary: 'ユーザーを削除',
+    tags: ['Teams'],
+    summary: 'チームを削除',
     request: {
         params: idParam,
     },
@@ -178,7 +178,7 @@ const deleteUserRoute = createRoute({
     },
 });
 
-app.openapi(deleteUserRoute, async (c) => {
+app.openapi(deleteTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
     
     await prisma.team.delete({
