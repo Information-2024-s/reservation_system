@@ -51,43 +51,6 @@ export default function LiffProvider({ children }: { children: ReactNode }) {
 
   return (
     <LiffContext.Provider value={{ liff: liffObject, liffError, isLoggedIn }}>
-      {/* ログイン状態が未判定またはLIFF初期化中は何も表示しない */}
-      {isLoggedIn === false ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(255,255,255,0.95)",
-            zIndex: 9999,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <p>LINEログインが必要です。</p>
-          <a
-            href={officialAccountUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              marginTop: "16px",
-              padding: "12px 24px",
-              background: "#06C755",
-              color: "#fff",
-              borderRadius: "8px",
-              textDecoration: "none",
-              fontWeight: "bold",
-              fontSize: "16px",
-            }}
-          >
-            公式アカウントへ
-          </a>
-        </div>
-      ) : null}
       {children}
     </LiffContext.Provider>
   );

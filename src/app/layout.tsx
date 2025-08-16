@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <LiffProvider>{children}</LiffProvider>
+        {children}
       </body>
     </html>
   );
