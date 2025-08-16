@@ -110,11 +110,9 @@ export default function Home() {
               </a>
             </li>
             <li>
-              <a
-                href="https://www.google.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              ></a>
+              <a href="/api-docs">
+                API ドキュメント
+              </a>
             </li>
             <li>
               <a
