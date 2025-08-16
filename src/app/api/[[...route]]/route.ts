@@ -2,14 +2,14 @@ import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
-import user from './team'
+import team from './team'
 import reservation from './reservation'
 import score from './score'
 
 const app = new OpenAPIHono().basePath('/api');
 
 // API routes
-app.route("/users", user);
+app.route("/teams", team);
 app.route("/reservations", reservation);
 app.route("/scores", score);
 
