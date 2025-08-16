@@ -1,0 +1,73 @@
+import { z } from '@hono/zod-openapi';
+
+// User Zod Object
+export const user = z.object({
+    id: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    name: z.string().openapi({ example: 'John Doe', description: 'ユーザー名' }),
+    createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
+    updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
+});
+
+export const createUser = z.object({
+    name: z.string().min(1).openapi({ example: 'John Doe', description: 'ユーザー名' }),
+});
+
+export const updateUser = z.object({
+    name: z.string().min(1).optional().openapi({ example: 'Jane Doe', description: 'ユーザー名' }),
+});
+
+// Score Zod Object
+export const score = z.object({
+    id: z.number().int().positive().openapi({ example: 1, description: 'スコアID' }),
+    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    score: z.number().int().openapi({ example: 100, description: 'スコア' }),
+    createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
+    updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
+});
+
+export const createScore = z.object({
+    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    score: z.number().int().openapi({ example: 100, description: 'スコア' }),
+});
+
+export const updateScore = z.object({
+    score: z.number().int().optional().openapi({ example: 95, description: 'スコア' }),
+});
+
+// Reservation Zod Object
+export const reservation = z.object({
+    id: z.number().int().positive().openapi({ example: 1, description: '予約ID' }),
+    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    receiptNumber: z.string().openapi({ example: 'R-12345', description: 'レシート番号' }),
+    numberOfPeople: z.number().int().positive().openapi({ example: 4, description: '人数' }),
+    startTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '開始時刻' }),
+    endTime: z.string().openapi({ example: '2023-01-01T20:00:00.000Z', description: '終了時刻' }),
+    createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
+    updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
+});
+
+export const createReservation = z.object({
+    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    receiptNumber: z.string().min(1).openapi({ example: 'R-12345', description: 'レシート番号' }),
+    numberOfPeople: z.number().int().positive().min(1).openapi({ example: 4, description: '人数' }),
+    startTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '開始時刻' }),
+    endTime: z.string().openapi({ example: '2023-01-01T20:00:00.000Z', description: '終了時刻' }),
+});
+
+export const updateReservation = z.object({
+    receiptNumber: z.string().min(1).optional().openapi({ example: 'R-54321', description: 'レシート番号' }),
+    numberOfPeople: z.number().int().positive().min(1).optional().openapi({ example: 2, description: '人数' }),
+    startTime: z.string().optional().openapi({ example: '2023-01-01T19:00:00.000Z', description: '開始時刻' }),
+    endTime: z.string().optional().openapi({ example: '2023-01-01T21:00:00.000Z', description: '終了時刻' }),
+});
+
+// Common parameter objects
+export const idParam = z.object({
+    id: z.string().transform((val) => parseInt(val, 10)).pipe(z.number().int().positive()).openapi({ example: '1', description: 'ID' }),
+});
+
+// Error response object
+export const errorResponse = z.object({
+    error: z.string().openapi({ example: 'エラーメッセージ', description: 'エラーメッセージ' }),
+    details: z.string().optional().openapi({ example: '詳細なエラー情報', description: 'エラーの詳細' }),
+});

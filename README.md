@@ -1,6 +1,14 @@
 # 予約システム API
 
-このプロジェクトは、Prisma を使用した予約システムの API です。
+このプロジェクトは、Hono + Zod + Swagger UI を使用した予約システムのAPIです。
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 15
+- **API**: Hono with OpenAPI
+- **バリデーション**: Zod
+- **データベース**: PostgreSQL with Prisma
+- **ドキュメント**: Swagger UI
 
 ## セットアップ
 
@@ -29,25 +37,113 @@ npx prisma migrate dev
 npm run dev
 ```
 
+## API ドキュメント
+
+APIドキュメントはSwagger UIで確認できます：
+
+**Swagger UI**: http://localhost:3000/api/doc
+
 ## API エンドポイント
 
-### ユーザー管理
+### Users (ユーザー管理)
 
-#### 全ユーザー取得
+- `GET /api/users` - ユーザー一覧取得
+- `GET /api/users/{id}` - ユーザー詳細取得
+- `POST /api/users` - ユーザー作成
+- `PATCH /api/users/{id}` - ユーザー更新  
+- `DELETE /api/users/{id}` - ユーザー削除
 
+### Reservations (予約管理)
+
+- `GET /api/reservations` - 予約一覧取得
+- `GET /api/reservations/{id}` - 予約詳細取得
+- `POST /api/reservations` - 予約作成
+- `PATCH /api/reservations/{id}` - 予約更新
+- `DELETE /api/reservations/{id}` - 予約削除
+
+### Scores (スコア管理)
+
+- `GET /api/scores` - スコア一覧取得
+- `GET /api/scores/{id}` - スコア詳細取得
+- `POST /api/scores` - スコア作成
+- `PATCH /api/scores/{id}` - スコア更新
+- `DELETE /api/scores/{id}` - スコア削除
+
+## 使用例
+
+### ユーザー作成
+
+```bash
+curl -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "田中太郎"}'
 ```
-GET /api/users
+
+### 予約作成
+
+```bash
+curl -X POST http://localhost:3000/api/reservations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "receiptNumber": "R-12345",
+    "numberOfPeople": 4,
+    "startTime": "2024-01-01T18:00:00Z",
+    "endTime": "2024-01-01T20:00:00Z"
+  }'
 ```
 
-#### ユーザー作成
+### スコア作成
 
+```bash
+curl -X POST http://localhost:3000/api/scores \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "score": 100
+  }'
 ```
-POST /api/users
-Content-Type: application/json
 
-{
-  "name": "田中太郎"
-}
+## データベーススキーマ
+
+### User (ユーザー)
+- `id`: number (主キー)
+- `name`: string (ユーザー名)
+- `createdAt`: Date (作成日時)
+- `updatedAt`: Date (更新日時)
+
+### Reservation (予約)
+- `id`: number (主キー)
+- `userId`: number (ユーザーID)
+- `receiptNumber`: string (レシート番号)
+- `numberOfPeople`: number (人数)
+- `startTime`: Date (開始時刻)
+- `endTime`: Date (終了時刻)
+- `createdAt`: Date (作成日時)
+- `updatedAt`: Date (更新日時)
+
+### Score (スコア)
+- `id`: number (主キー)
+- `userId`: number (ユーザーID)
+- `score`: number (スコア)
+- `createdAt`: Date (作成日時)
+- `updatedAt`: Date (更新日時)
+
+## 開発
+
+### スキーマ更新
+Prismaスキーマを更新した場合：
+
+```bash
+npx prisma migrate dev --name describe_your_changes
+```
+
+### Prisma Studio
+データベースをGUIで確認：
+
+```bash
+npx prisma studio
+```
 ```
 
 #### 特定のユーザー取得
