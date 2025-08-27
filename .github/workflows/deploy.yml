@@ -24,6 +24,7 @@ jobs:
             cd ~/reservation_system
             echo "NEXT_PUBLIC_LIFF_ID=${{ secrets.NEXT_PUBLIC_LIFF_ID }}" > .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "API_KEY='l7U2eA0/Y629WhjgJt2SC2McxMChN/f/EwBh/7G6cTM='" >> .env
             git pull origin release/production
             npm install
             npx prisma migrate deploy

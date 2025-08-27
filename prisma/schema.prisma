@@ -17,21 +17,61 @@ model Team {
   id           Int           @id @default(autoincrement())
   name         String
   headcount    Int
-  scores       Score[]
+  scores       TeamScore[]
+  users        User[]
   reservations Reservation[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
 
-model Score {
-  id        Int      @id @default(autoincrement())
-  teamId    Int
-  score     Int
-  team      Team     @relation(fields: [teamId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model GameSession {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  teamScores  TeamScore[]
+  userScores  UserScore[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  name       String
+  teamId     Int
+  team       Team        @relation(fields: [teamId], references: [id])
+  userScores UserScore[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   @@index([teamId])
+}
+
+model TeamScore {
+  id            Int          @id @default(autoincrement())
+  teamId        Int
+  score         Int
+  gameSessionId Int?
+  team          Team         @relation(fields: [teamId], references: [id])
+  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([teamId])
+  @@index([gameSessionId])
+}
+
+model UserScore {
+  id            Int          @id @default(autoincrement())
+  userId        Int
+  score         Int
+  gameSessionId Int?
+  user          User         @relation(fields: [userId], references: [id])
+  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([gameSessionId])
 }
 
 model Reservation {
