@@ -33,7 +33,10 @@ const getUserScoresRoute = createRoute({
 app.openapi(getUserScoresRoute, async (c) => {
     const { userId, gameSessionId, limit } = c.req.valid('query');
     
-    const where: any = {};
+    const where: {
+        userId?: number;
+        gameSessionId?: number;
+    } = {};
     if (userId) where.userId = userId;
     if (gameSessionId) where.gameSessionId = gameSessionId;
     

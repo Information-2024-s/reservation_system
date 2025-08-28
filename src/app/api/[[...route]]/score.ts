@@ -42,7 +42,7 @@ const getScoresRoute = createRoute({
 app.openapi(getScoresRoute, async (c) => {
     const { limit, gameSessionId } = c.req.valid('query');
     
-    const where: any = {};
+    const where: { gameSessionId?: number } = {};
     if (gameSessionId) where.gameSessionId = gameSessionId;
     
     const scores = await prisma.teamScore.findMany({
@@ -289,7 +289,7 @@ const getRankingRoute = createRoute({
 app.openapi(getRankingRoute, async (c) => {
     const { gameSessionId } = c.req.valid('query');
     
-    const where: any = {};
+    const where: { gameSessionId?: number } = {};
     if (gameSessionId) where.gameSessionId = gameSessionId;
     
     const teams = await prisma.team.findMany({
