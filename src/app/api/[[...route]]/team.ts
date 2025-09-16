@@ -1,8 +1,13 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { prisma } from '../../../lib/prisma';
 import { team, createTeam, updateTeam, idParam } from './zod_objects';
+import { authenticateCombined, getCurrentUserId } from './auth-helpers';
+import { z } from 'zod';
 
 const app = new OpenAPIHono();
+
+// 全てのルートに認証を適用
+app.use('*', authenticateCombined);
 
 // チーム一覧取得ルート
 const getTeamsRoute = createRoute({
@@ -29,6 +34,7 @@ app.openapi(getTeamsRoute, async (c) => {
 
     const formattedTeams = teams.map((team) => ({
         ...team,
+        lineUserId: team.lineUserId,
         createdAt: team.createdAt.toISOString(),
         updatedAt: team.updatedAt.toISOString(),
     }));
@@ -54,6 +60,16 @@ const getTeamRoute = createRoute({
                 },
             },
         },
+        404: {
+            description: 'Not Found',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
     },
 });
 
@@ -64,13 +80,18 @@ app.openapi(getTeamRoute, async (c) => {
         where: { id },
     });
 
+    if (!teamRecord) {
+        return c.json({ error: 'チームが見つかりません' }, 404);
+    }
+
     const formattedTeam = {
-        ...teamRecord!,
-        createdAt: teamRecord!.createdAt.toISOString(),
-        updatedAt: teamRecord!.updatedAt.toISOString(),
+        ...teamRecord,
+        lineUserId: teamRecord.lineUserId,
+        createdAt: teamRecord.createdAt.toISOString(),
+        updatedAt: teamRecord.updatedAt.toISOString(),
     };
 
-    return c.json(formattedTeam);
+    return c.json(formattedTeam, 200);
 });
 
 // チーム作成ルート
@@ -97,14 +118,41 @@ const createTeamRoute = createRoute({
                 },
             },
         },
+        400: {
+            description: 'Bad Request',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
     },
 });
 
 app.openapi(createTeamRoute, async (c) => {
     const data = c.req.valid('json');
-
+    
+    // 現在認証されているユーザーIDを取得
+    const currentUserId = await getCurrentUserId(c);
+    
+    const teamData = {
+        name: data.name,
+        headcount: data.headcount,
+        lineUserId: null as string | null,
+    };
+    
+    if (currentUserId) {
+        // NextAuth認証の場合、認証されたユーザーIDを使用
+        teamData.lineUserId = currentUserId;
+    } else if (data.lineUserId) {
+        // APIキー認証で明示的にlineUserIdが指定された場合のみ設定
+        teamData.lineUserId = data.lineUserId;
+    }
+    
     const newTeam = await prisma.team.create({
-        data,
+        data: teamData,
     });
 
     const formattedTeam = {
@@ -141,12 +189,48 @@ const updateTeamRoute = createRoute({
                 },
             },
         },
+        403: {
+            description: 'Forbidden',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
+        404: {
+            description: 'Not Found',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
     },
 });
 
 app.openapi(updateTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
     const data = c.req.valid('json');
+
+    const currentUserId = await getCurrentUserId(c);
+    
+    // チームが存在するかチェック
+    const existingTeam = await prisma.team.findUnique({
+        where: { id },
+    });
+
+    if (!existingTeam) {
+        return c.json({ error: 'チームが見つかりません' }, 404);
+    }
+
+    // NextAuth認証の場合、自分のチームのみ更新可能
+    if (currentUserId && existingTeam.lineUserId !== currentUserId) {
+        return c.json({ error: 'このチームを更新する権限がありません' }, 403);
+    }
 
     const updatedTeam = await prisma.team.update({
         where: { id },
@@ -159,7 +243,7 @@ app.openapi(updateTeamRoute, async (c) => {
         updatedAt: updatedTeam.updatedAt.toISOString(),
     };
 
-    return c.json(formattedTeam);
+    return c.json(formattedTeam, 200);
 });
 
 // チーム削除ルート
@@ -175,11 +259,47 @@ const deleteTeamRoute = createRoute({
         204: {
             description: 'No Content',
         },
+        403: {
+            description: 'Forbidden',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
+        404: {
+            description: 'Not Found',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        error: z.string(),
+                    }),
+                },
+            },
+        },
     },
 });
 
 app.openapi(deleteTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
+    
+    const currentUserId = await getCurrentUserId(c);
+    
+    // チームが存在するかチェック
+    const existingTeam = await prisma.team.findUnique({
+        where: { id },
+    });
+
+    if (!existingTeam) {
+        return c.json({ error: 'チームが見つかりません' }, 404);
+    }
+
+    // NextAuth認証の場合、自分のチームのみ削除可能
+    if (currentUserId && existingTeam.lineUserId !== currentUserId) {
+        return c.json({ error: 'このチームを削除する権限がありません' }, 403);
+    }
     
     await prisma.team.delete({
         where: { id },
@@ -187,5 +307,8 @@ app.openapi(deleteTeamRoute, async (c) => {
     
     return c.body(null, 204);
 });
+
+// 認証ミドルウェアを適用
+app.use('*', authenticateCombined);
 
 export default app;

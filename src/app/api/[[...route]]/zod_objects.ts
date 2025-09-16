@@ -5,6 +5,7 @@ export const team = z.object({
     id: z.number().int().positive().openapi({ example: 1, description: 'チームID' }),
     name: z.string().openapi({ example: 'Team Alpha', description: 'チーム名' }),
     headcount: z.number().int().positive().openapi({ example: 5, description: '人数' }),
+    lineUserId: z.string().nullable().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'LINE ユーザーID' }),
     createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
     updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
 });
@@ -12,6 +13,7 @@ export const team = z.object({
 export const createTeam = z.object({
     name: z.string().min(1).openapi({ example: 'Team Alpha', description: 'チーム名' }),
     headcount: z.number().int().positive().openapi({ example: 5, description: '人数' }),
+    lineUserId: z.string().optional().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'LINE ユーザーID（NextAuth使用時は自動設定）' }),
 });
 
 export const updateTeam = z.object({
@@ -21,16 +23,18 @@ export const updateTeam = z.object({
 
 // User Zod Object
 export const user = z.object({
-    id: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
-    name: z.string().openapi({ example: 'John Doe', description: 'ユーザー名' }),
-    teamId: z.number().int().positive().openapi({ example: 1, description: 'チームID' }),
+    id: z.string().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'ユーザーID' }),
+    name: z.string().nullable().openapi({ example: 'John Doe', description: 'ユーザー名' }),
+    email: z.string().nullable().openapi({ example: 'john@example.com', description: 'メールアドレス' }),
+    teamId: z.number().int().positive().nullable().openapi({ example: 1, description: 'チームID' }),
     createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
     updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
 });
 
 export const createUser = z.object({
     name: z.string().min(1).openapi({ example: 'John Doe', description: 'ユーザー名' }),
-    teamId: z.number().int().positive().openapi({ example: 1, description: 'チームID' }),
+    email: z.string().email().openapi({ example: 'john@example.com', description: 'メールアドレス' }),
+    teamId: z.number().int().positive().optional().openapi({ example: 1, description: 'チームID' }),
 });
 
 export const updateUser = z.object({
@@ -81,7 +85,7 @@ export const updateTeamScore = z.object({
 // UserScore Zod Object
 export const userScore = z.object({
     id: z.number().int().positive().openapi({ example: 1, description: 'ユーザースコアID' }),
-    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    userId: z.string().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'ユーザーID' }),
     score: z.number().int().openapi({ example: 25, description: 'スコア' }),
     gameSessionId: z.number().int().positive().nullable().openapi({ example: 1, description: 'ゲームセッションID' }),
     createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
@@ -89,7 +93,7 @@ export const userScore = z.object({
 });
 
 export const createUserScore = z.object({
-    userId: z.number().int().positive().openapi({ example: 1, description: 'ユーザーID' }),
+    userId: z.string().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'ユーザーID' }),
     score: z.number().int().openapi({ example: 25, description: 'スコア' }),
     gameSessionId: z.number().int().positive().optional().openapi({ example: 1, description: 'ゲームセッションID' }),
 });
@@ -108,27 +112,48 @@ export const updateScore = updateTeamScore;
 export const reservation = z.object({
     id: z.number().int().positive().openapi({ example: 1, description: '予約ID' }),
     teamId: z.number().int().positive().openapi({ example: 1, description: 'チームID' }),
-    receiptNumber: z.string().openapi({ example: 'R-12345', description: 'レシート番号' }),
-    numberOfPeople: z.number().int().positive().openapi({ example: 4, description: '人数' }),
+    lineUserId: z.string().nullable().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'LINE ユーザーID' }),
     startTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '開始時刻' }),
-    endTime: z.string().openapi({ example: '2023-01-01T20:00:00.000Z', description: '終了時刻' }),
+    timeSlotId: z.number().int().positive().nullable().openapi({ example: 1, description: 'タイムスロットID' }),
     createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
     updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
 });
 
 export const createReservation = z.object({
     teamId: z.number().int().positive().openapi({ example: 1, description: 'チームID' }),
-    receiptNumber: z.string().min(1).openapi({ example: 'R-12345', description: 'レシート番号' }),
-    numberOfPeople: z.number().int().positive().min(1).openapi({ example: 4, description: '人数' }),
+    lineUserId: z.string().optional().openapi({ example: 'clig1h2k40000qn8l4g4l4g4l', description: 'LINE ユーザーID（NextAuth使用時は自動設定）' }),
     startTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '開始時刻' }),
-    endTime: z.string().openapi({ example: '2023-01-01T20:00:00.000Z', description: '終了時刻' }),
+    timeSlotId: z.number().int().positive().optional().openapi({ example: 1, description: 'タイムスロットID' }),
 });
 
 export const updateReservation = z.object({
-    receiptNumber: z.string().min(1).optional().openapi({ example: 'R-54321', description: 'レシート番号' }),
-    numberOfPeople: z.number().int().positive().min(1).optional().openapi({ example: 2, description: '人数' }),
     startTime: z.string().optional().openapi({ example: '2023-01-01T19:00:00.000Z', description: '開始時刻' }),
-    endTime: z.string().optional().openapi({ example: '2023-01-01T21:00:00.000Z', description: '終了時刻' }),
+    timeSlotId: z.number().int().positive().optional().openapi({ example: 1, description: 'タイムスロットID' }),
+});
+
+// TimeSlot Zod Object
+export const slotType = z.enum(['RESERVABLE', 'WALK_IN']).openapi({ example: 'RESERVABLE', description: '枠の種類' });
+export const slotStatus = z.enum(['AVAILABLE', 'BOOKED']).openapi({ example: 'AVAILABLE', description: '予約状況' });
+
+export const timeSlot = z.object({
+    id: z.number().int().positive().openapi({ example: 1, description: 'タイムスロットID' }),
+    slotTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '予約枠の開始時刻' }),
+    slotType: slotType,
+    status: slotStatus,
+    createdAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '作成日' }),
+    updatedAt: z.string().openapi({ example: '2023-01-01T00:00:00.000Z', description: '更新日' }),
+});
+
+export const createTimeSlot = z.object({
+    slotTime: z.string().openapi({ example: '2023-01-01T18:00:00.000Z', description: '予約枠の開始時刻' }),
+    slotType: slotType,
+    status: slotStatus.optional(),
+});
+
+export const updateTimeSlot = z.object({
+    slotTime: z.string().optional().openapi({ example: '2023-01-01T19:00:00.000Z', description: '予約枠の開始時刻' }),
+    slotType: slotType.optional(),
+    status: slotStatus.optional(),
 });
 
 // Common parameter objects

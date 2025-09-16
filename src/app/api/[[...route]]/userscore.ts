@@ -2,8 +2,12 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { prisma } from '../../../lib/prisma';
 import { userScore, createUserScore, updateUserScore, idParam, errorResponse } from './zod_objects';
 import { z } from 'zod';
+import { authenticateApiKeyOnly } from './auth-helpers';
 
 const app = new OpenAPIHono();
+
+// 認証ミドルウェアを適用（APIキー認証のみ）
+app.use('*', authenticateApiKeyOnly);
 
 // ユーザースコア一覧取得ルート
 const getUserScoresRoute = createRoute({
@@ -13,7 +17,7 @@ const getUserScoresRoute = createRoute({
     summary: 'ユーザースコア一覧を取得',
     request: {
         query: z.object({
-            userId: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
+            userId: z.string().optional(),
             gameSessionId: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
             limit: z.string().optional().default('10').transform(val => parseInt(val, 10)),
         }),
@@ -34,7 +38,7 @@ app.openapi(getUserScoresRoute, async (c) => {
     const { userId, gameSessionId, limit } = c.req.valid('query');
     
     const where: {
-        userId?: number;
+        userId?: string;
         gameSessionId?: number;
     } = {};
     if (userId) where.userId = userId;

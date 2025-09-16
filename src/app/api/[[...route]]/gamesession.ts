@@ -1,8 +1,12 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { prisma } from '../../../lib/prisma';
 import { gameSession, createGameSession, updateGameSession, idParam, errorResponse } from './zod_objects';
+import { authenticateApiKeyOnly } from './auth-helpers';
 
 const app = new OpenAPIHono();
+
+// 認証ミドルウェアを適用（APIキー認証のみ）
+app.use('*', authenticateApiKeyOnly);
 
 // ゲームセッション一覧取得ルート
 const getGameSessionsRoute = createRoute({

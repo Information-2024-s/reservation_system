@@ -2,8 +2,12 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { prisma } from '../../../lib/prisma';
 import { teamScore, createTeamScore, updateTeamScore, idParam, errorResponse } from './zod_objects';
 import { z } from 'zod';
+import { authenticateApiKeyOnly } from './auth-helpers';
 
 const app = new OpenAPIHono();
+
+// 認証ミドルウェアを適用（APIキー認証のみ）
+app.use('*', authenticateApiKeyOnly);
 
 // ランキング用のスキーマ定義
 const rankingItem = z.object({

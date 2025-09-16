@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
-import { useLiff } from "./LiffProvider";
+import { useGlobalContext } from "@/hooks/useGlobalContexts";
 
 export default function Home() {
-  const { isLoggedIn } = useLiff();
+  const { liff } = useGlobalContext();
+  const isLoggedIn = liff?.isLoggedIn() ?? false;
 
   useEffect(() => {
     // ハンバーガーメニューのクリックイベント

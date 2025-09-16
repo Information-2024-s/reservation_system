@@ -13,15 +13,78 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Auth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  teamId        Int?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  userScores    UserScore[]
+  reservations  Reservation[] @relation("UserReservations")
+  ownedTeams    Team[]    @relation("UserTeams")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
 model Team {
   id           Int           @id @default(autoincrement())
   name         String
   headcount    Int
+  lineUserId   String?       // アクセス制御用
   scores       TeamScore[]
   users        User[]
   reservations Reservation[]
+  lineUser     User?         @relation("UserTeams", fields: [lineUserId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([lineUserId])
 }
 
 model GameSession {
@@ -32,18 +95,6 @@ model GameSession {
   userScores  UserScore[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-}
-
-model User {
-  id         Int         @id @default(autoincrement())
-  name       String
-  teamId     Int
-  team       Team        @relation(fields: [teamId], references: [id])
-  userScores UserScore[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  @@index([teamId])
 }
 
 model TeamScore {
@@ -62,7 +113,7 @@ model TeamScore {
 
 model UserScore {
   id            Int          @id @default(autoincrement())
-  userId        Int
+  userId        String       @map("user_id")
   score         Int
   gameSessionId Int?
   user          User         @relation(fields: [userId], references: [id])
@@ -77,13 +128,40 @@ model UserScore {
 model Reservation {
   id             Int      @id @default(autoincrement())
   teamId         Int
-  receiptNumber  String
-  numberOfPeople Int
+  lineUserId     String?   // オプショナルに変更
   startTime      DateTime
-  endTime        DateTime
-  team           Team     @relation(fields: [teamId], references: [id])
+  team           Team?    @relation(fields: [teamId], references: [id])
+  lineUser       User?    @relation("UserReservations", fields: [lineUserId], references: [id])
+  timeSlotId     Int?     @unique // TimeSlotとのリレーション用
+  timeSlot       TimeSlot? @relation(fields: [timeSlotId], references: [id])
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([teamId])
+  @@index([timeSlotId])
+  @@index([lineUserId])
+}
+
+model TimeSlot {
+  id       Int      @id @default(autoincrement())
+  slotTime DateTime @unique // 予約枠の開始時刻
+  slotType SlotType // 枠の種類 (予約可能 or 当日枠)
+  status   SlotStatus @default(AVAILABLE) // 予約状況 (空き or 予約済み)
+
+  // この時間枠に行われた予約 (リレーション)
+  // timeSlotIdがuniqueなので、このリストには最大1つの予約しか入らない
+  reservation Reservation?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SlotType {
+  RESERVABLE // 予約可能枠
+  WALK_IN    // 予約不要の当日枠
+}
+
+enum SlotStatus {
+  AVAILABLE // 空きあり
+  BOOKED    // 予約済み
 }
