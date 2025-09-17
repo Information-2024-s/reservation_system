@@ -63,6 +63,17 @@ export default function ReservationModal({
                 : "当日受付枠"}
             </div>
           </div>
+
+          {/* 予約について */}
+          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-700">
+            <div className="text-sm text-green-600 dark:text-green-300 mb-1">
+              📝 予約について
+            </div>
+            <div className="text-sm text-green-800 dark:text-green-200">
+              この予約を確定すると、他の時間枠の予約はできなくなります。
+              （1人につき1枠まで）
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3">
