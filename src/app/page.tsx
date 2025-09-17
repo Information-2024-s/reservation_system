@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { useGlobalContext } from "@/hooks/useGlobalContexts";
+import "./page.css";
 
 export default function Home() {
   const { liff } = useGlobalContext();
@@ -111,9 +112,7 @@ export default function Home() {
               </a>
             </li>
             <li>
-              <a href="/api-docs">
-                API ドキュメント
-              </a>
+              <a href="/api-docs">API ドキュメント</a>
             </li>
             <li>
               <a

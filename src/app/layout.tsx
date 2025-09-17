@@ -6,7 +6,6 @@ import { Liff } from "@line/liff";
 import { useEffect, useState } from "react";
 import { signIn, signOut, SessionProvider } from "next-auth/react";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -27,15 +26,15 @@ export default function RootLayout({
 
   const handleLogout = async () => {
     if (!liffObject) return;
-    
+
     // NextAuthのログアウトを先に実行
     await signOut({ redirect: false });
-    
+
     // LIFFのログアウト
     if (liffObject.isLoggedIn()) {
       liffObject.logout();
     }
-    
+
     // ページリロード
     window.location.reload();
   };
@@ -43,7 +42,7 @@ export default function RootLayout({
   // Execute liff.init() when the app is initialized
   useEffect(() => {
     // to avoid `window is not defined` error
-      import("@line/liff")
+    import("@line/liff")
       .then((liff) => liff.default)
       .then((liff) => {
         console.log("LIFF init...");
@@ -80,7 +79,11 @@ export default function RootLayout({
       >
         <SessionProvider>
           <GlobalContext.Provider
-            value={{ liff: liffObject, liffError: liffError, handleLogout: handleLogout }}
+            value={{
+              liff: liffObject,
+              liffError: liffError,
+              handleLogout: handleLogout,
+            }}
           >
             {children}
           </GlobalContext.Provider>

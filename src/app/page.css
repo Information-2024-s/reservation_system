@@ -1,0 +1,573 @@
+a,
+button,
+input,
+select,
+h1,
+h2,
+h3,
+h4,
+h5,
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-decoration: none;
+  background: none;
+
+  -webkit-font-smoothing: antialiased;
+}
+
+menu,
+ol,
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+@font-face {
+  font-family: "BestTenDot-Regular";
+  src: url("BestTen-DOT.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "横浜ドット-Regular";
+  src: url("YokohamaDotsJPN.otf") format("opentype");
+}
+
+html,
+body {
+  height: 100%;
+  overflow: auto;
+}
+
+.i-phone-16-1,
+.i-phone-16-1 * {
+  box-sizing: border-box;
+}
+.i-phone-16-1 {
+  background: #ffffff;
+  display: flex;
+  flex-direction: row;
+  gap: 13px;
+  row-gap: 0px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  position: relative;
+  min-height: 100vh; /* これを追加 */
+  overflow: auto;
+}
+.frame-7 {
+  flex-shrink: 0;
+  width: 200px;
+  height: 91px;
+  position: fixed;
+  right: 35px;
+  bottom: 26px;
+  z-index: 100;
+  transition: right 0.3s ease-in-out; /* rightを使ったスライドアニメーション */
+}
+.frame-6 {
+  background: #ffffff;
+  border-radius: 11px;
+  border-style: solid;
+  border-color: #1ab4f6;
+  border-width: 4px;
+  padding: 8px 4px 8px 21px;
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  align-items: center;
+  justify-content: flex-start;
+  height: 59px;
+  position: absolute;
+  left: 0px;
+  top: 32px;
+  transition: transform 0.2s ease;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+    rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+    rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+
+.frame-6:hover {
+  transform: scale(1.05); /* ホバーで拡大 */
+}
+.frame-6:active {
+  transform: scale(0.95); /* クリックで縮小 */
+}
+
+.line {
+  color: #000000;
+  text-align: center;
+  position: relative;
+}
+.line-span {
+  color: #000000;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 14px;
+  line-height: 144.91%;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+}
+.line-span2 {
+  color: #000000;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+}
+.frame {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  position: relative;
+  overflow: visible;
+}
+.ellipse-1 {
+  background: #ffffff;
+  border-radius: 50%;
+  border-style: solid;
+  border-color: #1ab4f6;
+  border-width: 4px;
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  left: 150px;
+  top: 0px;
+}
+._2 {
+  color: #000000;
+  text-align: center;
+  position: absolute;
+  left: 165px;
+  top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+._2-span {
+  color: #000000;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 20px;
+  line-height: 19%;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+._2-span2 {
+  color: #000000;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 20px;
+  line-height: 144.91%;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+._2-span3 {
+  color: #000000;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 6px;
+  line-height: 144.91%;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+.header {
+  background: rgba(0, 0, 0, 0.58);
+  flex: 1;
+  width: 100%;
+  height: 48px;
+  position: fixed;
+  z-index: 100;
+}
+
+.humburger {
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.div {
+  color: #ffffff;
+  text-align: left;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: absolute;
+  left: 24px;
+  top: 21px;
+  width: 218px;
+  height: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* サイドメニューのスタイル */
+.side-menu {
+  position: fixed;
+  top: 0;
+  right: -250px; /* 初期状態で隠れている */
+  width: 250px;
+  height: 100%;
+  background-color: #333;
+  font-family: "BestTenDot-Regular", sans-serif;
+  letter-spacing: 0.11em;
+  color: #fff;
+  transition: right 0.3s ease-in-out; /* アニメーションでスライド */
+  z-index: 101;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.side-menu ul {
+  list-style: none;
+  padding: 20px;
+  margin: 0;
+}
+
+.side-menu ul li {
+  margin: 10px 0;
+}
+
+.side-menu ul li a {
+  color: #fff;
+  text-decoration: none;
+
+  padding: 5px;
+  line-height: 2.5; /* 行間の調整 */
+  font-size: 16px; /* 必要に応じてフォントサイズも調整 */
+}
+
+.side-menu.open {
+  right: 0; /* メニューが出てくる */
+}
+
+.big-logos {
+  flex-shrink: 0;
+  width: 263px;
+  height: 163px;
+  position: static;
+}
+.frame-2 {
+  width: 245px;
+  height: 113px;
+  position: absolute;
+  left: 50%;
+  translate: -50%;
+  top: 100px;
+}
+.rectangle-1 {
+  background: #d9d9d9;
+  width: 300px;
+  height: 150px;
+  position: fixed;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.div2 {
+  color: #000000;
+  text-align: center;
+  font-family: "NotoSansJp-Black", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.11em;
+  font-weight: 900;
+  position: absolute;
+  top: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 50%;
+  transform: translateX(-50%);
+}
+._2-i {
+  color: #000000;
+  text-align: center;
+  font-family: "横浜ドット-Regular", sans-serif;
+  font-size: 35px;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: absolute;
+  left: 50%;
+  translate: -50%;
+  top: 270px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.div3 {
+  color: #000000;
+  text-align: center;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 14px;
+  line-height: 200%;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: absolute;
+  left: 50%;
+  translate: -50%;
+  top: 400px;
+}
+
+.buttons {
+  flex-shrink: 0;
+  width: 325px;
+  height: 51px;
+  position: absolute;
+  left: 50%;
+  translate: -50%;
+  top: 850px;
+}
+
+.buttons a {
+  text-decoration: none; /* 下線を消す */
+  color: inherit; /* 親要素の文字色を継承する */
+  display: flex; /* divと同じように中身をflexで並べる */
+  transition: transform 0.2s ease; /* アニメーション追加 */
+}
+
+/* ホバーしたとき */
+.buttons a:hover {
+  transform: scale(1.05); /* 少し拡大 */
+}
+
+/* 押している間（PCクリックもスマホタップも） */
+.buttons a:active {
+  transform: scale(0.95); /* 少し縮小 */
+}
+
+.kuwasiku {
+  background: #ffffff;
+  border-radius: 12px;
+  border-style: solid;
+  border-color: #1ab4f6;
+  border-width: 4px;
+  padding: 8px 4px 8px 28px;
+  display: flex;
+  flex-direction: row;
+  gap: 7px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 143px;
+  height: 51px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+    rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+    rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+.div4 {
+  color: #000000;
+  text-align: center;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 10px;
+  line-height: 174.85%;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: relative;
+}
+.frame2 {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  position: relative;
+  overflow: visible;
+}
+.for-players {
+  background: #ffffff;
+  border-radius: 12px;
+  border-style: solid;
+  border-color: #1ab4f6;
+  border-width: 4px;
+  padding: 8px 4px 8px 22px;
+  display: flex;
+  flex-direction: row;
+  gap: 7px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 143px;
+  height: 51px;
+  position: absolute;
+  left: 179px;
+  top: 0px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+    rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+    rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+.frame3 {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  position: relative;
+  overflow: visible;
+}
+.information {
+  flex-shrink: 0;
+  width: 211px;
+  height: 209px;
+  position: static;
+}
+
+.div6 {
+  color: #000000;
+  font-family: "横浜ドット-Regular", sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: absolute;
+  top: 1050px;
+  text-align: center;
+  left: 50%;
+  translate: -50%;
+  display: flex;
+}
+
+.frame-8 {
+  background: #ffffff; /* 背景を白に */
+  border: none; /* 枠線を消す */
+  border-radius: 16px; /* 角を丸くする */
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  overflow-y: scroll;
+  width: 390px;
+  height: 168px;
+  position: absolute;
+  left: 50%;
+  translate: -50%;
+  top: 1100px;
+  font-family: "BestTenDot-Regular", sans-serif;
+  font-size: 14px;
+  line-height: 2; /* 行間を少しだけ詰めた */
+  letter-spacing: 0.05em; /* 文字間を若干詰めた */
+  display: block;
+  padding: 16px; /* 内側の余白を大きめに */
+  box-sizing: border-box;
+
+  /* スクロールバーをカスタマイズ（Webkit系ブラウザ用） */
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f5f5f5;
+}
+
+/* Chrome、Edge用：スクロールバーのデザイン */
+.frame-8::-webkit-scrollbar {
+  width: 8px;
+}
+
+.frame-8::-webkit-scrollbar-track {
+  background: #f5f5f5; /* スクロールバー背景 */
+  border-radius: 16px;
+}
+
+.frame-8::-webkit-scrollbar-thumb {
+  background: #cccccc; /* スクロールバー本体 */
+  border-radius: 16px;
+}
+
+.rectangle-2 {
+  background: #d9d9d9;
+  width: 211px;
+  height: 168px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+.div5 {
+  color: #000000;
+  text-align: center;
+  font-family: "NotoSansJp-Black", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.11em;
+  font-weight: 900;
+  position: absolute;
+  left: 46px;
+  top: 77px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.div7 {
+  color: #000000;
+  font-family: "横浜ドット-Regular", sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.11em;
+  font-weight: 400;
+  position: absolute;
+  top: 1400px;
+  text-align: center;
+  left: 50%;
+  translate: -50%;
+  display: flex;
+}
+
+.maps {
+  flex-shrink: 0;
+  width: 211px;
+  height: 209px;
+  position: static;
+}
+.frame-82 {
+  width: 211px;
+  height: 168px;
+  position: absolute;
+  left: calc(50% - 102.5px);
+  top: 1450px;
+  padding: 300px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: rgb(247, 247, 247);
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background-image: repeating-linear-gradient(
+      0deg,
+      #ffffff 0px,
+      #ffffff 3px,
+      transparent 3px,
+      transparent 30px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      #ffffff 0px,
+      #ffffff 3px,
+      transparent 3px,
+      transparent 30px
+    ),
+    radial-gradient(
+      circle,
+      rgba(252, 252, 252, 0.7) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ); /* 追加したグラデーション */
+  animation: moveBackground 150s linear infinite;
+  z-index: 0;
+}
+
+@keyframes moveBackground {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 50px;
+}

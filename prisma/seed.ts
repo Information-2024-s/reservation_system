@@ -1,22 +1,22 @@
-import { PrismaClient, SlotType, SlotStatus } from '@prisma/client';
+import { PrismaClient, SlotType, SlotStatus } from "@prisma/client";
 
 // PrismaClientのインスタンスを作成
 const prisma = new PrismaClient();
 
 // シード処理を実行するメイン関数
 async function main() {
-  console.log('Seeding started...');
+  console.log("Seeding started...");
 
   // 外部キー制約のため、関連するモデルから先に削除する
   await prisma.reservation.deleteMany({});
   await prisma.timeSlot.deleteMany({});
   await prisma.team.deleteMany({}); // Teamも念のためクリア
-  console.log('Cleared existing data.');
+  console.log("Cleared existing data.");
 
   // --- 設定値 ---
-  const DATES_TO_SEED = ['2025-11-01', '2025-11-02']; // 対象の日付 (年は適宜変更してください)
+  const DATES_TO_SEED = ["2025-11-01", "2025-11-02"]; // 対象の日付 (年は適宜変更してください)
   const START_HOUR = 10; // 開始時刻 (10時)
-  const END_HOUR = 16;   // 終了時刻 (16時は含まず、15:57まで)
+  const END_HOUR = 16; // 終了時刻 (16時は含まず、15:57まで)
   const INTERVAL_MINUTES = 3; // 時間間隔 (3分)
 
   const slotsToCreate = [];
@@ -28,12 +28,16 @@ async function main() {
     const targetDate = new Date(`${dateStr}T00:00:00Z`);
 
     const startTime = new Date(targetDate.getTime());
+    // 日本時間をUTCとして正しく登録するため、9時間を引く
     startTime.setUTCHours(START_HOUR, 0, 0, 0);
+    startTime.setUTCHours(startTime.getUTCHours() - 9);
 
     const endTime = new Date(targetDate.getTime());
+    // 日本時間をUTCとして正しく登録するため、9時間を引く
     endTime.setUTCHours(END_HOUR, 0, 0, 0);
-    
-    let currentTime = startTime;
+    endTime.setUTCHours(endTime.getUTCHours() - 9);
+
+    const currentTime = startTime;
 
     // 開始時刻から終了時刻まで、指定した間隔でループ
     while (currentTime < endTime) {
@@ -61,7 +65,7 @@ async function main() {
   });
 
   console.log(`Created ${slotsToCreate.length} time slots.`);
-  console.log('Seeding finished successfully.');
+  console.log("Seeding finished successfully.");
 }
 
 // メイン関数を実行し、エラーハンドリングを行う
@@ -74,4 +78,3 @@ main()
     // スクリプトの最後にPrismaClientとの接続を閉じる
     await prisma.$disconnect();
   });
-
