@@ -33,6 +33,10 @@ const getGameSessionsRoute = createRoute({
 
 app.openapi(getGameSessionsRoute, async (c) => {
     const gameSessions = await prisma.gameSession.findMany({
+        include: {
+            team: true,
+            teamScores: true,
+        },
         orderBy: { createdAt: 'desc' },
     });
     
@@ -131,11 +135,11 @@ const createGameSessionRoute = createRoute({
 });
 
 app.openapi(createGameSessionRoute, async (c) => {
-    const { name, description } = c.req.valid('json');
+    const data = c.req.valid('json');
     
     try {
         const newSession = await prisma.gameSession.create({
-            data: { name, description },
+            data,
         });
         
         const formattedSession = {

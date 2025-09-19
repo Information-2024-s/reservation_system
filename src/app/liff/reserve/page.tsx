@@ -6,7 +6,7 @@ import Link from "next/link";
 import ReservationModal from "./ReservationModal";
 import TeamRegistration, { TeamData } from "./TeamRegistration";
 import ReservationConfirmation from "./ReservationConfirmation";
-import ReservationEditModal from "./ReservationEditModal";
+import TeamEditModal from "./TeamEditModal";
 import { TimeSlot, convertUTCToJST, formatJSTTime } from "./types";
 
 export default function ReservePage() {
@@ -60,8 +60,8 @@ export default function ReservePage() {
       id: number;
       name: string;
       headcount: number;
-      members: Array<{
-        id: number;
+      players: Array<{
+        id: string;
         name: string;
       }>;
     } | null;
@@ -84,9 +84,9 @@ export default function ReservePage() {
     useState<UserReservation | null>(null);
   const [isLoadingUserReservation, setIsLoadingUserReservation] =
     useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTeamEditModalOpen, setIsTeamEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isSavingTeamEdit, setIsSavingTeamEdit] = useState(false);
 
   // 選択状態の管理
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -126,7 +126,9 @@ export default function ReservePage() {
       const response = await fetch("/api/reservations/my-reservation");
       if (response.ok) {
         const data = await response.json();
+        
         setUserReservation(data.reservation ? data : null);
+        
       } else {
         throw new Error("予約情報の取得に失敗しました");
       }
@@ -165,36 +167,67 @@ export default function ReservePage() {
     }
   };
 
-  // 予約を変更
-  const handleEditReservation = async (
-    reservationId: number,
-    newTimeSlotId: number
+  // チーム情報を変更
+  const handleEditTeam = async (
+    teamId: number,
+    teamData: {
+      name: string;
+      headcount: number;
+      memberNames: string[];
+    }
   ) => {
-    setIsSavingEdit(true);
+    console.log('=== handleEditTeam が呼ばれました ===');
+    console.log('teamId:', teamId);
+    console.log('teamData:', teamData);
+    
+    setIsSavingTeamEdit(true);
     try {
-      const response = await fetch(`/api/reservations/${reservationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          timeSlotId: newTimeSlotId,
-        }),
-      });
+      const requestBody = JSON.stringify(teamData);
+      console.log('リクエストボディ:', requestBody);
+      
+      let response;
+      
+      if (teamId === -1) {
+        // 新規チーム作成
+        console.log('新規チーム作成API呼び出し');
+        response = await fetch(`/api/reservations/${userReservation?.reservation.id}/add-team`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+        });
+      } else {
+        // 既存チーム編集
+        console.log('既存チーム編集API呼び出し');
+        response = await fetch(`/api/teams/${teamId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+        });
+      }
 
+      console.log('レスポンスステータス:', response.status);
+      
       if (response.ok) {
-        alert("予約を変更しました。");
-        setIsEditModalOpen(false);
+        const responseData = await response.json();
+        console.log('レスポンスデータ:', responseData);
+        alert(teamId === -1 ? "チーム情報を登録しました。" : "チーム情報を変更しました。");
+        setIsTeamEditModalOpen(false);
         // 予約情報を再取得
         await fetchUserReservation();
       } else {
-        throw new Error("予約の変更に失敗しました");
+        const errorData = await response.json();
+        console.error('エラーレスポンス:', errorData);
+        throw new Error(errorData.message || (teamId === -1 ? "チーム情報の登録に失敗しました" : "チーム情報の変更に失敗しました"));
       }
     } catch (err) {
-      console.error("Error updating reservation:", err);
-      alert(err instanceof Error ? err.message : "予約の変更に失敗しました");
+      console.error("Error updating team:", err);
+      alert(err instanceof Error ? err.message : (teamId === -1 ? "チーム情報の登録に失敗しました" : "チーム情報の変更に失敗しました"));
     } finally {
-      setIsSavingEdit(false);
+      setIsSavingTeamEdit(false);
     }
   }; // TimeSlots APIからデータを取得（フィルタリング付き）
   const fetchTimeSlots = async (date: string, hour: number) => {
@@ -273,6 +306,63 @@ export default function ReservePage() {
     }
   };
 
+  // チーム情報なしで直接予約
+  const handleDirectReservation = async () => {
+    if (!selectedTimeSlot) return;
+
+    console.log('=== 直接予約開始 ===');
+    console.log('選択されたタイムスロット:', selectedTimeSlot);
+
+    try {
+      const requestBody = {
+        timeSlotId: selectedTimeSlot.id,
+      };
+      
+      console.log('リクエストボディ:', requestBody);
+
+      const response = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('レスポンスステータス:', response.status);
+      console.log('レスポンスヘッダー:', response.headers);
+
+      const responseData = await response.json();
+      console.log('レスポンスデータ:', responseData);
+
+      if (response.ok) {
+        console.log('予約成功!');
+        alert(
+          `予約が完了しました！\n時間: ${formatJSTTime(
+            convertUTCToJST(selectedTimeSlot.slotTime)
+          )}\n\nチーム情報は後から追加できます。`
+        );
+        closeModal();
+        // 予約後に既存予約情報を再取得
+        await fetchUserReservation();
+        // 予約後にタイムスロットを再取得
+        if (selectedDate && selectedHour !== null) {
+          fetchTimeSlots(selectedDate, selectedHour);
+        }
+      } else {
+        console.error('予約失敗 - レスポンス:', responseData);
+        throw new Error(responseData.message || responseData.error || '予約に失敗しました');
+      }
+    } catch (err) {
+      console.error('=== 予約エラー詳細 ===');
+      console.error('エラーオブジェクト:', err);
+      console.error('エラータイプ:', typeof err);
+      console.error('エラーメッセージ:', err instanceof Error ? err.message : err);
+      
+      const errorMessage = err instanceof Error ? err.message : '予約に失敗しました';
+      alert(`予約エラー: ${errorMessage}\n\n詳細はデベロッパーツールのコンソールを確認してください。`);
+    }
+  };
+
   useEffect(() => {
     const fetchUserReservationOnMount = async () => {
       setIsLoadingUserReservation(true);
@@ -282,6 +372,7 @@ export default function ReservePage() {
         const response = await fetch("/api/reservations/my-reservation");
         if (response.ok) {
           const data = await response.json();
+          console.log(data);
           setUserReservation(data.reservation ? data : null);
         } else {
           throw new Error("予約情報の取得に失敗しました");
@@ -441,7 +532,7 @@ export default function ReservePage() {
             // 既存予約がある場合は確認画面を表示
             <ReservationConfirmation
               userReservation={userReservation}
-              onEdit={() => setIsEditModalOpen(true)}
+              onTeamEdit={() => setIsTeamEditModalOpen(true)}
               onDelete={handleDeleteReservation}
               isDeleting={isDeleting}
             />
@@ -612,7 +703,7 @@ export default function ReservePage() {
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-md bg-gray-500 border border-gray-600"></div>
                     <span className="text-sm text-gray-600 dark:text-gray-300">
-                      予約不要 (当日枠)
+                      予約不可 (当日枠)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -721,6 +812,7 @@ export default function ReservePage() {
           availableDates={availableDates}
           onClose={closeModal}
           onNext={handleNext}
+          onReserveDirect={handleDirectReservation}
         />
 
         {/* チーム情報登録モーダル */}
@@ -734,14 +826,14 @@ export default function ReservePage() {
           onComplete={handleTeamReservationComplete}
         />
 
-        {/* 予約編集モーダル */}
+        {/* チーム編集モーダル */}
         {userReservation && (
-          <ReservationEditModal
+          <TeamEditModal
             userReservation={userReservation}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={handleEditReservation}
-            isSaving={isSavingEdit}
+            isOpen={isTeamEditModalOpen}
+            onClose={() => setIsTeamEditModalOpen(false)}
+            onSave={handleEditTeam}
+            isSaving={isSavingTeamEdit}
           />
         )}
       </div>

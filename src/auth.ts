@@ -41,21 +41,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         // credentialsオブジェクトからアクセストークンを取得
         const accessToken = credentials?.accessToken;
-
+      
         if (typeof accessToken !== "string") {
           throw new Error("Access token not provided or is invalid.");
         }
 
         // LINEのトークンを検証し、プロフィール情報を取得
         const profile = await verifyLineToken(accessToken);
-
+        console.log("Verified LINE profile:", profile);
         if (profile) {
           // 認証成功。NextAuthに返すユーザーオブジェクト
           return {
-            id: profile.sub, // LINEのユーザーID
+            id: profile.userId, // LINEのユーザーID
             name: profile.name,
-            email: profile.email,
-            image: profile.picture,
           };
         }
 

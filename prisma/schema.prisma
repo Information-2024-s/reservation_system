@@ -13,86 +13,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String        @id @default(cuid())
-  name        String?
-  teamId      Int?
-  team        Team?         @relation(fields: [teamId], references: [id])
-  userScores  UserScore[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Reservation Reservation[]
-
-  @@map("users")
+generator erd {
+  provider = "prisma-erd-generator"
+  theme = "forest"
+  output = "ERD.md"
+  includeRelationFromFields = true
 }
 
-model Team {
-  id           Int           @id @default(autoincrement())
-  name         String
-  headcount    Int
-  scores       TeamScore[]
-  users        User[]
-  reservations Reservation[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  userId       String?
-}
-
-model GameSession {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String?
-  teamScores  TeamScore[]
-  userScores  UserScore[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-
-model TeamScore {
-  id            Int          @id @default(autoincrement())
-  teamId        Int
-  score         Int
-  gameSessionId Int?
-  team          Team         @relation(fields: [teamId], references: [id])
-  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@index([teamId])
-  @@index([gameSessionId])
-}
-
-model UserScore {
-  id            Int          @id @default(autoincrement())
-  userId        String       @map("user_id")
-  score         Int
-  gameSessionId Int?
-  user          User         @relation(fields: [userId], references: [id])
-  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@index([userId])
-  @@index([gameSessionId])
-}
-
-model Reservation {
-  id         Int       @id @default(autoincrement())
-  teamId     Int
-  lineUserId String? // オプショナルに変更
-  startTime  DateTime
-  team       Team?     @relation(fields: [teamId], references: [id])
-  timeSlotId Int?      @unique // TimeSlotとのリレーション用
-  timeSlot   TimeSlot? @relation(fields: [timeSlotId], references: [id])
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  User       User?     @relation(fields: [userId], references: [id])
-  userId     String?
-
-  @@index([teamId])
-  @@index([timeSlotId])
-  @@index([lineUserId])
-}
 
 model TimeSlot {
   id       Int        @id @default(autoincrement())
@@ -117,3 +44,102 @@ enum SlotStatus {
   AVAILABLE // 空きあり
   BOOKED // 予約済み
 }
+
+
+
+model Reservation {
+  id         Int       @id @default(autoincrement())
+  lineUserId String? // オプショナルに変更
+  startTime  DateTime
+
+  timeSlotId Int?      @unique // TimeSlotとのリレーション用
+  timeSlot   TimeSlot? @relation(fields: [timeSlotId], references: [id])
+
+  teams      Team[]
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+
+  @@index([timeSlotId])
+  @@index([lineUserId])
+}
+
+model Team {
+  id           Int           @id @default(autoincrement())
+  name         String
+  headcount    Int
+
+  reservation_id Int
+  reservation    Reservation @relation(fields: [reservation_id], references: [id])
+
+  players        Player[]
+  gameSessions   GameSession[]
+  teamScores     TeamScore[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Player {
+  id          Int        @id @default(autoincrement())
+  name        String?
+  
+  team_id      Int
+  team         Team @relation(fields: [team_id], references: [id])
+  playerScores PlayerScore[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+
+model GameSession {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  
+  team_id    Int
+  team       Team @relation(fields: [team_id], references: [id])
+  teamScores TeamScore[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model TeamScore {
+  id            Int          @id @default(autoincrement())
+  score         Int
+
+  team_id         Int
+  game_session_id Int
+  team            Team        @relation(fields: [team_id], references: [id])
+  gameSession     GameSession @relation(fields: [game_session_id], references: [id])
+  
+  playerScores    PlayerScore[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([team_id])
+  @@index([game_session_id])
+}
+
+model PlayerScore {
+  id            Int          @id @default(autoincrement())
+  score         Int
+
+  player_id     Int
+  team_score_id Int
+  player        Player    @relation(fields: [player_id], references: [id])
+  teamScore     TeamScore @relation(fields: [team_score_id], references: [id])
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([player_id])
+  @@index([team_score_id])
+}
+
+
+

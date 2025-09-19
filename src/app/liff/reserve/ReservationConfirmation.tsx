@@ -15,8 +15,8 @@ interface UserReservation {
     id: number;
     name: string;
     headcount: number;
-    users: Array<{
-      id: number;
+    players: Array<{
+      id: string;
       name: string;
     }>;
   } | null;
@@ -29,14 +29,14 @@ interface UserReservation {
 
 interface ReservationConfirmationProps {
   userReservation: UserReservation;
-  onEdit: () => void;
+  onTeamEdit: () => void;
   onDelete: () => void;
   isDeleting: boolean;
 }
 
 export default function ReservationConfirmation({
   userReservation,
-  onEdit,
+  onTeamEdit,
   onDelete,
   isDeleting,
 }: ReservationConfirmationProps) {
@@ -99,13 +99,13 @@ export default function ReservationConfirmation({
               メンバー数: {team.headcount}人
             </p>
 
-            {team.users.length > 0 && (
+            {team.players.length > 0 && (
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   メンバー:
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {team.users.map((user, index) => (
+                  {team.players.map((user, index) => (
                     <span
                       key={user.id}
                       className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
@@ -141,10 +141,10 @@ export default function ReservationConfirmation({
       </div>
 
       {/* アクションボタン */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3">
         <button
-          onClick={onEdit}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          onClick={onTeamEdit}
+          className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
         >
           <svg
             className="w-5 h-5 mr-2"
@@ -156,16 +156,16 @@ export default function ReservationConfirmation({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
             />
           </svg>
-          予約を変更
+          チーム編集
         </button>
 
         <button
           onClick={onDelete}
           disabled={isDeleting}
-          className="flex-1 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          className="w-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
         >
           {isDeleting ? (
             <>

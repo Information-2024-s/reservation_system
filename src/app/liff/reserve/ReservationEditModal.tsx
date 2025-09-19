@@ -15,8 +15,8 @@ interface UserReservation {
     id: number;
     name: string;
     headcount: number;
-    members: Array<{
-      id: number;
+    users: Array<{
+      id: string;
       name: string;
     }>;
   } | null;

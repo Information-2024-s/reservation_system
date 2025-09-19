@@ -34,7 +34,6 @@ app.openapi(getTeamsRoute, async (c) => {
 
     const formattedTeams = teams.map((team) => ({
         ...team,
-        lineUserId: team.lineUserId,
         createdAt: team.createdAt.toISOString(),
         updatedAt: team.updatedAt.toISOString(),
     }));
@@ -86,7 +85,6 @@ app.openapi(getTeamRoute, async (c) => {
 
     const formattedTeam = {
         ...teamRecord,
-        lineUserId: teamRecord.lineUserId,
         createdAt: teamRecord.createdAt.toISOString(),
         updatedAt: teamRecord.updatedAt.toISOString(),
     };
@@ -140,16 +138,8 @@ app.openapi(createTeamRoute, async (c) => {
     const teamData = {
         name: data.name,
         headcount: data.headcount,
-        lineUserId: null as string | null,
+        reservation_id: data.reservation_id,
     };
-    
-    if (currentUserId) {
-        // NextAuth認証の場合、認証されたユーザーIDを使用
-        teamData.lineUserId = currentUserId;
-    } else if (data.lineUserId) {
-        // APIキー認証で明示的にlineUserIdが指定された場合のみ設定
-        teamData.lineUserId = data.lineUserId;
-    }
     
     const newTeam = await prisma.team.create({
         data: teamData,
@@ -227,15 +217,31 @@ app.openapi(updateTeamRoute, async (c) => {
         return c.json({ error: 'チームが見つかりません' }, 404);
     }
 
-    // NextAuth認証の場合、自分のチームのみ更新可能
-    if (currentUserId && existingTeam.lineUserId !== currentUserId) {
-        return c.json({ error: 'このチームを更新する権限がありません' }, 403);
-    }
+    // memberNamesを分離して処理
+    const { memberNames, ...teamData } = data;
 
     const updatedTeam = await prisma.team.update({
         where: { id },
-        data,
+        data: teamData,
     });
+
+    // memberNamesが提供されている場合は更新
+    if (memberNames) {
+        // 既存のプレイヤーを削除
+        await prisma.player.deleteMany({
+            where: { team_id: id },
+        });
+
+        // 新しいプレイヤーを追加
+        if (memberNames.length > 0) {
+            await prisma.player.createMany({
+                data: memberNames.map((name: string) => ({
+                    team_id: id,
+                    name,
+                })),
+            });
+        }
+    }
 
     const formattedTeam = {
         ...updatedTeam,
@@ -285,8 +291,6 @@ const deleteTeamRoute = createRoute({
 app.openapi(deleteTeamRoute, async (c) => {
     const { id } = c.req.valid('param');
     
-    const currentUserId = await getCurrentUserId(c);
-    
     // チームが存在するかチェック
     const existingTeam = await prisma.team.findUnique({
         where: { id },
@@ -294,11 +298,6 @@ app.openapi(deleteTeamRoute, async (c) => {
 
     if (!existingTeam) {
         return c.json({ error: 'チームが見つかりません' }, 404);
-    }
-
-    // NextAuth認証の場合、自分のチームのみ削除可能
-    if (currentUserId && existingTeam.lineUserId !== currentUserId) {
-        return c.json({ error: 'このチームを削除する権限がありません' }, 403);
     }
     
     await prisma.team.delete({

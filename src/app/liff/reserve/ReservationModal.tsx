@@ -9,6 +9,7 @@ interface ReservationModalProps {
   availableDates: { value: string; label: string }[];
   onClose: () => void;
   onNext: () => void;
+  onReserveDirect: () => void;
 }
 
 export default function ReservationModal({
@@ -19,6 +20,7 @@ export default function ReservationModal({
   availableDates,
   onClose,
   onNext,
+  onReserveDirect,
 }: ReservationModalProps) {
   if (!isOpen || !selectedTimeSlot) {
     return null;
@@ -49,7 +51,7 @@ export default function ReservationModal({
               予約者
             </div>
             <div className="font-bold text-gray-900 dark:text-gray-100">
-              {profile?.displayName || "ゲスト"}さん
+              {profile?.displayName || "ゲスト"} 様
             </div>
           </div>
 
@@ -74,20 +76,38 @@ export default function ReservationModal({
               （1人につき1枠まで）
             </div>
           </div>
+
+          {/* チーム情報について */}
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+            <div className="text-sm text-yellow-600 dark:text-yellow-300 mb-1">
+              🎯 チーム情報の登録について
+            </div>
+            <div className="text-sm text-yellow-800 dark:text-yellow-200">
+              チーム情報を事前に登録しておくと、当日の受付がスムーズになります。
+              <br />
+              <span className="font-semibold">チーム登録は後から追加することもできます。</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-gray-500 dark:bg-gray-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
-          >
-            キャンセル
-          </button>
+        <div className="space-y-3">
           <button
             onClick={onNext}
-            className="flex-1 bg-green-500 dark:bg-green-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-green-600 dark:hover:bg-green-700 transition-colors"
+            className="w-full bg-green-500 dark:bg-green-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-green-600 dark:hover:bg-green-700 transition-colors"
           >
-            予約手続きへ
+            今すぐチーム情報を登録して予約
+          </button>
+          <button
+            onClick={onReserveDirect}
+            className="w-full bg-blue-500 dark:bg-blue-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
+          >
+            チーム情報は後で登録（予約のみ確定）
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full bg-gray-500 dark:bg-gray-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+          >
+            キャンセル
           </button>
         </div>
       </div>

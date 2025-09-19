@@ -3,12 +3,12 @@ import { handle } from 'hono/vercel'
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import team from './team'
-import user from './user'
+import player from './player'
 import reservation from './reservation'
 import timeslot from './timeslot'
-import score from './score'
+import teamscore from './teamscore'
+import playerscore from './playerscore'
 import gamesession from './gamesession'
-import userscore from './userscore'
 
 const app = new OpenAPIHono().basePath('/api');
 
@@ -45,12 +45,12 @@ app.get('/doc',
 
 // API routes
 app.route("/teams", team);
-app.route("/users", user);
+app.route("/players", player);
 app.route("/reservations", reservation);
 app.route("/timeslots", timeslot);
-app.route("/scores", score);
+app.route("/teamscores", teamscore);
+app.route("/playerscores", playerscore);
 app.route("/gamesessions", gamesession);
-app.route("/userscores", userscore);
 app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })
