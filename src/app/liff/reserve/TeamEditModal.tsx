@@ -88,7 +88,7 @@ export default function TeamEditModal({
     }
     
     setMemberNames(newMemberNames);
-  }, [memberCount]);
+  }, [memberCount, memberNames]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};

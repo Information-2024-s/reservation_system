@@ -43,7 +43,12 @@ app.openapi(getTimeSlotsRoute, async (c) => {
   const startHour = c.req.query("startHour"); // 数値（10など）
   const endHour = c.req.query("endHour"); // 数値（16など）
 
-  let whereConditions: any = {};
+  const whereConditions: {
+    slotTime?: {
+      gte?: Date;
+      lte?: Date;
+    };
+  } = {};
 
   // 日付フィルタ
   if (date) {

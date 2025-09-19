@@ -20,10 +20,10 @@ export default function Home() {
       if (liff.isLoggedIn()) {
         liff
           .getProfile()
-          .then((userProfile: any) => {
+          .then((userProfile: { displayName: string; userId: string; pictureUrl?: string; statusMessage?: string }) => {
             setProfile(userProfile);
           })
-          .catch((err: any) => console.error("Error getting profile:", err));
+          .catch((err: unknown) => console.error("Error getting profile:", err));
       }
     }
   }, [liff]);
