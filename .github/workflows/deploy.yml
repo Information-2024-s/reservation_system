@@ -26,6 +26,7 @@ jobs:
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
             echo "API_KEY='l7U2eA0/Y629WhjgJt2SC2McxMChN/f/EwBh/7G6cTM='" >> .env
             echo "AUTH_SECRET='gC0XzxTGvc4UNLQGz4qU1Ni3I3CoRDgZ5qWrggGsMiY='" >> .env
+            echo "AUTH_TRUST_HOST='true'" >> .env
             git pull origin release/production
             npm install
             npx prisma migrate deploy
