@@ -1,2 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* モーダルのスクロール改善 */
+.modal-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* スマホでのモーダル表示改善 */
+@media (max-height: 700px) {
+  .modal-content {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+}

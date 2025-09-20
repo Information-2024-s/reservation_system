@@ -27,8 +27,8 @@ export default function ReservationModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl p-6 w-full max-w-md mx-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto modal-scroll">
+      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl p-6 w-full max-w-md mx-auto shadow-2xl my-4 max-h-[90vh] overflow-y-auto modal-content modal-scroll">
         <h3 className="text-xl font-bold text-center mb-6 text-gray-800 dark:text-gray-100">
           予約確認
         </h3>

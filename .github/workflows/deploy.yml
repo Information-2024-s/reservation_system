@@ -25,6 +25,7 @@ jobs:
             echo "NEXT_PUBLIC_LIFF_ID=${{ secrets.NEXT_PUBLIC_LIFF_ID }}" > .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
             echo "API_KEY='l7U2eA0/Y629WhjgJt2SC2McxMChN/f/EwBh/7G6cTM='" >> .env
+            echo "AUTH_SECRET='gC0XzxTGvc4UNLQGz4qU1Ni3I3CoRDgZ5qWrggGsMiY='" >> .env
             git pull origin release/production
             npm install
             npx prisma migrate deploy
