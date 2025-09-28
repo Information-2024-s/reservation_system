@@ -45,15 +45,19 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           withLoginOnExternalBrowser: true,
         });
 
-        const readyPromise = (liff as unknown as { ready?: Promise<void> }).ready;
-        if (readyPromise && typeof readyPromise.then === 'function') {
-          await readyPromise;
-        }
-
         if (isCancelled) return;
 
         setLiffObject(liff);
         setLiffError(null);
+
+        const readyPromise = (liff as unknown as { ready?: Promise<void> }).ready;
+        if (readyPromise && typeof readyPromise.then === 'function') {
+          try {
+            await readyPromise;
+          } catch (readyError) {
+            console.warn('LIFF ready wait failed:', readyError);
+          }
+        }
 
         if (liff.isLoggedIn() && !hasTriedSignInRef.current) {
           const accessToken = liff.getAccessToken();
