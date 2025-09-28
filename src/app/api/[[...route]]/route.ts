@@ -9,6 +9,7 @@ import timeslot from './timeslot'
 import teamscore from './teamscore'
 import playerscore from './playerscore'
 import gamesession from './gamesession'
+import line from './line'
 
 const app = new OpenAPIHono().basePath('/api');
 
@@ -51,6 +52,7 @@ app.route("/timeslots", timeslot);
 app.route("/teamscores", teamscore);
 app.route("/playerscores", playerscore);
 app.route("/gamesessions", gamesession);
+app.route("/line", line);
 app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })
