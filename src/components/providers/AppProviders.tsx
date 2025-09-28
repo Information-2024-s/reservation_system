@@ -10,24 +10,35 @@ type ReadyPromise = {
 	ready?: Promise<void>;
 };
 
-export function AppProviders({ children }: { children: React.ReactNode }) {
+type AppProvidersProps = {
+	children: React.ReactNode;
+	enableLiff?: boolean;
+};
+
+export function AppProviders({ children, enableLiff = false }: AppProvidersProps) {
 	const [liffObject, setLiffObject] = useState<Liff | null>(null);
 	const [liffError, setLiffError] = useState<string | null>(null);
 	const hasTriedSignInRef = useRef(false);
 
 	const handleLogout = useCallback(async () => {
-		if (!liffObject) return;
-
 		await signOut({ redirect: false });
 
-		if (liffObject.isLoggedIn()) {
+		if (liffObject?.isLoggedIn()) {
 			liffObject.logout();
 		}
 
-		window.location.reload();
+		if (typeof window !== "undefined") {
+			window.location.reload();
+		}
 	}, [liffObject]);
 
 	useEffect(() => {
+		if (!enableLiff) {
+			setLiffObject(null);
+			setLiffError(null);
+			return;
+		}
+
 		let isCancelled = false;
 
 		const init = async () => {
@@ -84,7 +95,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 		return () => {
 			isCancelled = true;
 		};
-	}, []);
+	}, [enableLiff]);
 
 	return (
 		<SessionProvider>

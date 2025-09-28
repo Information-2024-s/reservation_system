@@ -8,7 +8,7 @@ export default function LiffLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AppProviders>
+    <AppProviders enableLiff>
       <div className="min-h-screen">{children}</div>
     </AppProviders>
   );
