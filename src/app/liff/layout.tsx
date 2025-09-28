@@ -1,16 +1,10 @@
 "use client";
 import "./globals.css";
 
-export default function RootLayout({
+export default function LiffLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="ja">
-      <body>
-        {children}
-      </body>
-    </html>
-  );
+  return <div className="min-h-screen">{children}</div>;
 }
