@@ -23,6 +23,8 @@ npm install
 
 ```
 DATABASE_URL="postgresql://postgres:password@localhost:5432/mydb"
+LINE_CHANNEL_ACCESS_TOKEN="your-channel-access-token"
+LINE_CHANNEL_SECRET="your-channel-secret"
 ```
 
 3. データベースのマイグレーション
@@ -60,6 +62,12 @@ APIドキュメントはSwagger UIで確認できます：
 - `POST /api/reservations` - 予約作成
 - `PATCH /api/reservations/{id}` - 予約更新
 - `DELETE /api/reservations/{id}` - 予約削除
+
+### LINE Webhook
+
+- `POST /api/line/webhook` - LINE公式アカウントのWebhookを受信し、受け取ったテキストメッセージをそのまま返信（LINE Messaging APIを利用）
+- 待ち時間に関する問い合わせの場合は、`TimeSlot` テーブルから次の空き枠を検索し、実際の待ち時間を返します
+- LINE公式Webhookからのリクエストは `X-Line-Signature` と `LINE_CHANNEL_SECRET` を用いて検証されます
 
 ### Scores (スコア管理)
 
