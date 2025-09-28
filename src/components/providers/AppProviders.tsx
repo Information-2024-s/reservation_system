@@ -1,103 +1,102 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { SessionProvider, signIn, signOut } from 'next-auth/react';
-import type { Liff } from '@line/liff';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SessionProvider, signIn, signOut } from "next-auth/react";
+import type { Liff } from "@line/liff";
 
-import { GlobalContext } from '@/contexts/GlobalContexts';
+import { GlobalContext } from "@/contexts/GlobalContexts";
+
+type ReadyPromise = {
+	ready?: Promise<void>;
+};
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
-  const [liffObject, setLiffObject] = useState<Liff | null>(null);
-  const [liffError, setLiffError] = useState<string | null>(null);
-  const hasTriedSignInRef = useRef(false);
+	const [liffObject, setLiffObject] = useState<Liff | null>(null);
+	const [liffError, setLiffError] = useState<string | null>(null);
+	const hasTriedSignInRef = useRef(false);
 
-  const handleLogout = useCallback(async () => {
-    if (!liffObject) return;
+	const handleLogout = useCallback(async () => {
+		if (!liffObject) return;
 
-    await signOut({ redirect: false });
+		await signOut({ redirect: false });
 
-    if (liffObject.isLoggedIn()) {
-      liffObject.logout();
-    }
+		if (liffObject.isLoggedIn()) {
+			liffObject.logout();
+		}
 
-    window.location.reload();
-  }, [liffObject]);
+		window.location.reload();
+	}, [liffObject]);
 
-  useEffect(() => {
-    let isCancelled = false;
+	useEffect(() => {
+		let isCancelled = false;
 
-    const initLiff = async () => {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+		const init = async () => {
+			const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
 
-      if (!liffId) {
-        console.error('NEXT_PUBLIC_LIFF_ID is not defined.');
-        setLiffError('LIFF IDが設定されていません。管理者に連絡してください。');
-        return;
-      }
+			if (!liffId) {
+				console.error("NEXT_PUBLIC_LIFF_ID is not defined.");
+				setLiffError("LIFF IDが設定されていません。管理者に連絡してください。");
+				return;
+			}
 
-      try {
-        const liffModule = await import('@line/liff');
-        const liff = liffModule.default;
+			try {
+				const { default: liff } = await import("@line/liff");
 
-        console.log('LIFF init start');
-        await liff.init({
-          liffId,
-          withLoginOnExternalBrowser: true,
-        });
+				await liff.init({
+					liffId,
+					withLoginOnExternalBrowser: true,
+				});
 
-        if (isCancelled) return;
+				const readyPromise = (liff as ReadyPromise).ready;
+				if (readyPromise && typeof readyPromise.then === "function") {
+					await readyPromise;
+				}
 
-        setLiffObject(liff);
-        setLiffError(null);
+				if (isCancelled) return;
 
-        const readyPromise = (liff as unknown as { ready?: Promise<void> }).ready;
-        if (readyPromise && typeof readyPromise.then === 'function') {
-          try {
-            await readyPromise;
-          } catch (readyError) {
-            console.warn('LIFF ready wait failed:', readyError);
-          }
-        }
+				setLiffObject(liff);
+				setLiffError(null);
 
-        if (liff.isLoggedIn() && !hasTriedSignInRef.current) {
-          const accessToken = liff.getAccessToken();
-          if (accessToken) {
-            hasTriedSignInRef.current = true;
-            const result = await signIn('line-liff', {
-              accessToken,
-              redirect: false,
-            });
+				if (liff.isLoggedIn() && !hasTriedSignInRef.current) {
+					const accessToken = liff.getAccessToken();
 
-            if (result?.error) {
-              console.error('NextAuth sign-in failed:', result.error);
-            }
-          }
-        }
-      } catch (error) {
-        if (isCancelled) return;
-        console.error('LIFF init failed:', error);
-        setLiffError(error instanceof Error ? error.message : String(error));
-      }
-    };
+					if (accessToken) {
+						hasTriedSignInRef.current = true;
+						const result = await signIn("line-liff", {
+							accessToken,
+							redirect: false,
+						});
 
-    initLiff();
+						if (result?.error) {
+							console.error("NextAuth sign-in failed:", result.error);
+						}
+					}
+				}
+			} catch (error) {
+				if (isCancelled) return;
+				console.error("LIFF init failed:", error);
+				setLiffError(error instanceof Error ? error.message : String(error));
+			}
+		};
 
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+		init();
 
-  return (
-    <SessionProvider>
-      <GlobalContext.Provider
-        value={{
-          liff: liffObject,
-          liffError,
-          handleLogout,
-        }}
-      >
-        {children}
-      </GlobalContext.Provider>
-    </SessionProvider>
-  );
+		return () => {
+			isCancelled = true;
+		};
+	}, []);
+
+	return (
+		<SessionProvider>
+			<GlobalContext.Provider
+				value={{
+					liff: liffObject,
+					liffError,
+					handleLogout,
+				}}
+			>
+				{children}
+			</GlobalContext.Provider>
+		</SessionProvider>
+	);
 }
