@@ -27,6 +27,8 @@ jobs:
             echo "API_KEY='l7U2eA0/Y629WhjgJt2SC2McxMChN/f/EwBh/7G6cTM='" >> .env
             echo "AUTH_SECRET='gC0XzxTGvc4UNLQGz4qU1Ni3I3CoRDgZ5qWrggGsMiY='" >> .env
             echo "AUTH_TRUST_HOST='true'" >> .env
+            echo "LINE_CHANNEL_ACCESS_TOKEN='${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}'" >> .env
+            echo "LINE_CHANNEL_SECRET='${{ secrets.LINE_CHANNEL_SECRET }}'" >> .env
             git pull origin release/production
             npm install
             npx prisma migrate deploy
