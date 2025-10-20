@@ -9,7 +9,7 @@ export default function Home() {
   const { liff, liffError, handleLogout } = useGlobalContext();
   const [profile, setProfile] = useState<{ displayName?: string } | null>(null);
   const [isInLineApp, setIsInLineApp] = useState<boolean | null>(null);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (liff) {
@@ -84,7 +84,29 @@ export default function Home() {
     );
   }
 
-  const isLoggedIn = liff.isLoggedIn() && session;
+  // LIFFのログイン状態を確認
+  const isLiffLoggedIn = liff.isLoggedIn();
+  
+  // セッションが読み込み中の場合は待機
+  if (isLiffLoggedIn && status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-blue-900 flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+            認証中...
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            ログイン情報を確認しています
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isLoggedIn = isLiffLoggedIn && session;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -133,15 +155,17 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* ログアウトボタン */}
-              <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-colors text-sm"
-                >
-                  ログアウト
-                </button>
-              </div>
+              {/* ログアウトボタン（LINEアプリ内では非表示） */}
+              {isInLineApp === false && (
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-colors text-sm"
+                  >
+                    ログアウト
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             // ログイン前の画面

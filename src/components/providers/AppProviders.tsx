@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SessionProvider, signIn, signOut } from "next-auth/react";
+import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
 import type { Liff } from "@line/liff";
 
 import { GlobalContext } from "@/contexts/GlobalContexts";
@@ -15,10 +15,11 @@ type AppProvidersProps = {
 	enableLiff?: boolean;
 };
 
-export function AppProviders({ children, enableLiff = false }: AppProvidersProps) {
+function LiffProvider({ children, enableLiff }: AppProvidersProps) {
 	const [liffObject, setLiffObject] = useState<Liff | null>(null);
 	const [liffError, setLiffError] = useState<string | null>(null);
 	const hasTriedSignInRef = useRef(false);
+	const { update } = useSession();
 
 	const handleLogout = useCallback(async () => {
 		await signOut({ redirect: false });
@@ -80,6 +81,9 @@ export function AppProviders({ children, enableLiff = false }: AppProvidersProps
 
 						if (result?.error) {
 							console.error("NextAuth sign-in failed:", result.error);
+						} else if (result?.ok) {
+							// セッションを更新してUIに反映
+							await update();
 						}
 					}
 				}
@@ -95,19 +99,27 @@ export function AppProviders({ children, enableLiff = false }: AppProvidersProps
 		return () => {
 			isCancelled = true;
 		};
-	}, [enableLiff]);
+	}, [enableLiff, update]);
 
 	return (
+		<GlobalContext.Provider
+			value={{
+				liff: liffObject,
+				liffError,
+				handleLogout,
+			}}
+		>
+			{children}
+		</GlobalContext.Provider>
+	);
+}
+
+export function AppProviders({ children, enableLiff = false }: AppProvidersProps) {
+	return (
 		<SessionProvider>
-			<GlobalContext.Provider
-				value={{
-					liff: liffObject,
-					liffError,
-					handleLogout,
-				}}
-			>
+			<LiffProvider enableLiff={enableLiff}>
 				{children}
-			</GlobalContext.Provider>
+			</LiffProvider>
 		</SessionProvider>
 	);
 }

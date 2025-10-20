@@ -320,3 +320,29 @@ GET /api/users/reservations?userId={userId}
 - `400`: バリデーションエラー
 - `404`: リソースが見つかりません
 - `500`: サーバーエラー
+
+## ライブラリクレジット
+
+このプロジェクトは以下のオープンソースライブラリを使用しています：
+
+### プロダクションライブラリ
+- **[Next.js](https://nextjs.org/)** - React フレームワーク
+- **[Hono](https://hono.dev/)** - 軽量で高速なWebフレームワーク
+- **[Zod](https://zod.dev/)** - TypeScript ファーストなスキーマバリデーション
+- **[Prisma](https://www.prisma.io/)** - 次世代のTypeScript ORM
+- **[NextAuth.js](https://next-auth.js.org/)** - Next.js 認証ライブラリ
+- **[React](https://reactjs.org/)** - ユーザーインターフェース構築ライブラリ
+- **[LINE LIFF](https://developers.line.biz/ja/docs/liff/)** - LINE フロントエンドフレームワーク
+
+### APIドキュメント
+- **[@hono/swagger-ui](https://github.com/honojs/middleware/tree/main/packages/swagger-ui)** - Swagger UI ミドルウェア
+- **[@hono/zod-openapi](https://github.com/honojs/middleware/tree/main/packages/zod-openapi)** - Zod と OpenAPI の統合
+
+### 開発ツール
+- **[TypeScript](https://www.typescriptlang.org/)** - 型安全なJavaScript
+- **[Tailwind CSS](https://tailwindcss.com/)** - ユーティリティファーストCSSフレームワーク
+- **[ESLint](https://eslint.org/)** - JavaScript/TypeScript リンター
+- **[Prisma ERD Generator](https://github.com/keonik/prisma-erd-generator)** - Prismaスキーマから図を生成
+- **[Mermaid CLI](https://mermaid.js.org/)** - 図表生成ツール
+
+これらのライブラリの開発者・コントリビューターの皆様に感謝いたします。
