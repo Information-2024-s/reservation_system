@@ -25,11 +25,11 @@ BOOKED BOOKED
 
   "Reservation" {
     Int id "🗝️"
-    String lineUserId "❓"
     DateTime startTime 
-    Int timeSlotId "❓"
     DateTime createdAt 
     DateTime updatedAt 
+    Int timeSlotId "❓"
+    String lineUserId "❓"
     }
   
 
@@ -37,7 +37,6 @@ BOOKED BOOKED
     Int id "🗝️"
     String name 
     Int headcount 
-    Int reservation_id 
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -56,26 +55,26 @@ BOOKED BOOKED
     Int id "🗝️"
     String name 
     String description "❓"
-    Int team_id 
     DateTime createdAt 
     DateTime updatedAt 
+    Int team_id 
     }
   
 
   "TeamScore" {
     Int id "🗝️"
     Int score 
-    Int team_id 
-    Int game_session_id 
     DateTime createdAt 
     DateTime updatedAt 
+    Int game_session_id 
+    Int team_id 
     }
   
 
   "PlayerScore" {
     Int id "🗝️"
     Int score 
-    Int player_id 
+    Int player_id "❓"
     Int team_score_id 
     DateTime createdAt 
     DateTime updatedAt 
@@ -85,18 +84,16 @@ BOOKED BOOKED
     "TimeSlot" o|--|| "SlotStatus" : "enum:status"
     "TimeSlot" o{--}o "Reservation" : ""
     "Reservation" o|--|o "TimeSlot" : "timeSlot"
-    "Reservation" o{--}o "Team" : ""
-    "Team" o|--|| "Reservation" : "reservation"
-    "Team" o{--}o "Player" : ""
     "Team" o{--}o "GameSession" : ""
+    "Team" o{--}o "Player" : ""
     "Team" o{--}o "TeamScore" : ""
     "Player" o|--|| "Team" : "team"
     "Player" o{--}o "PlayerScore" : ""
     "GameSession" o|--|| "Team" : "team"
     "GameSession" o{--}o "TeamScore" : ""
-    "TeamScore" o|--|| "Team" : "team"
-    "TeamScore" o|--|| "GameSession" : "gameSession"
     "TeamScore" o{--}o "PlayerScore" : ""
-    "PlayerScore" o|--|| "Player" : "player"
+    "TeamScore" o|--|| "GameSession" : "gameSession"
+    "TeamScore" o|--|| "Team" : "team"
+    "PlayerScore" o|--|o "Player" : "player"
     "PlayerScore" o|--|| "TeamScore" : "teamScore"
 ```

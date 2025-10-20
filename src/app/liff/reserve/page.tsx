@@ -126,9 +126,8 @@ export default function ReservePage() {
       const response = await fetch("/api/reservations/my-reservation");
       if (response.ok) {
         const data = await response.json();
-        
+
         setUserReservation(data.reservation ? data : null);
-        
       } else {
         throw new Error("予約情報の取得に失敗しました");
       }
@@ -176,30 +175,33 @@ export default function ReservePage() {
       memberNames: string[];
     }
   ) => {
-    console.log('=== handleEditTeam が呼ばれました ===');
-    console.log('teamId:', teamId);
-    console.log('teamData:', teamData);
-    
+    console.log("=== handleEditTeam が呼ばれました ===");
+    console.log("teamId:", teamId);
+    console.log("teamData:", teamData);
+
     setIsSavingTeamEdit(true);
     try {
       const requestBody = JSON.stringify(teamData);
-      console.log('リクエストボディ:', requestBody);
-      
+      console.log("リクエストボディ:", requestBody);
+
       let response;
-      
+
       if (teamId === -1) {
         // 新規チーム作成
-        console.log('新規チーム作成API呼び出し');
-        response = await fetch(`/api/reservations/${userReservation?.reservation.id}/add-team`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: requestBody,
-        });
+        console.log("新規チーム作成API呼び出し");
+        response = await fetch(
+          `/api/reservations/${userReservation?.reservation.id}/add-team`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: requestBody,
+          }
+        );
       } else {
         // 既存チーム編集
-        console.log('既存チーム編集API呼び出し');
+        console.log("既存チーム編集API呼び出し");
         response = await fetch(`/api/teams/${teamId}`, {
           method: "PATCH",
           headers: {
@@ -209,23 +211,38 @@ export default function ReservePage() {
         });
       }
 
-      console.log('レスポンスステータス:', response.status);
-      
+      console.log("レスポンスステータス:", response.status);
+
       if (response.ok) {
         const responseData = await response.json();
-        console.log('レスポンスデータ:', responseData);
-        alert(teamId === -1 ? "チーム情報を登録しました。" : "チーム情報を変更しました。");
+        console.log("レスポンスデータ:", responseData);
+        alert(
+          teamId === -1
+            ? "チーム情報を登録しました。"
+            : "チーム情報を変更しました。"
+        );
         setIsTeamEditModalOpen(false);
         // 予約情報を再取得
         await fetchUserReservation();
       } else {
         const errorData = await response.json();
-        console.error('エラーレスポンス:', errorData);
-        throw new Error(errorData.message || (teamId === -1 ? "チーム情報の登録に失敗しました" : "チーム情報の変更に失敗しました"));
+        console.error("エラーレスポンス:", errorData);
+        throw new Error(
+          errorData.message ||
+            (teamId === -1
+              ? "チーム情報の登録に失敗しました"
+              : "チーム情報の変更に失敗しました")
+        );
       }
     } catch (err) {
       console.error("Error updating team:", err);
-      alert(err instanceof Error ? err.message : (teamId === -1 ? "チーム情報の登録に失敗しました" : "チーム情報の変更に失敗しました"));
+      alert(
+        err instanceof Error
+          ? err.message
+          : teamId === -1
+          ? "チーム情報の登録に失敗しました"
+          : "チーム情報の変更に失敗しました"
+      );
     } finally {
       setIsSavingTeamEdit(false);
     }
@@ -310,32 +327,32 @@ export default function ReservePage() {
   const handleDirectReservation = async () => {
     if (!selectedTimeSlot) return;
 
-    console.log('=== 直接予約開始 ===');
-    console.log('選択されたタイムスロット:', selectedTimeSlot);
+    console.log("=== 直接予約開始 ===");
+    console.log("選択されたタイムスロット:", selectedTimeSlot);
 
     try {
       const requestBody = {
         timeSlotId: selectedTimeSlot.id,
       };
-      
-      console.log('リクエストボディ:', requestBody);
 
-      const response = await fetch('/api/reservations', {
-        method: 'POST',
+      console.log("リクエストボディ:", requestBody);
+
+      const response = await fetch("/api/reservations", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
 
-      console.log('レスポンスステータス:', response.status);
-      console.log('レスポンスヘッダー:', response.headers);
+      console.log("レスポンスステータス:", response.status);
+      console.log("レスポンスヘッダー:", response.headers);
 
       const responseData = await response.json();
-      console.log('レスポンスデータ:', responseData);
+      console.log("レスポンスデータ:", responseData);
 
       if (response.ok) {
-        console.log('予約成功!');
+        console.log("予約成功!");
         alert(
           `予約が完了しました！\n時間: ${formatJSTTime(
             convertUTCToJST(selectedTimeSlot.slotTime)
@@ -349,17 +366,25 @@ export default function ReservePage() {
           fetchTimeSlots(selectedDate, selectedHour);
         }
       } else {
-        console.error('予約失敗 - レスポンス:', responseData);
-        throw new Error(responseData.message || responseData.error || '予約に失敗しました');
+        console.error("予約失敗 - レスポンス:", responseData);
+        throw new Error(
+          responseData.message || responseData.error || "予約に失敗しました"
+        );
       }
     } catch (err) {
-      console.error('=== 予約エラー詳細 ===');
-      console.error('エラーオブジェクト:', err);
-      console.error('エラータイプ:', typeof err);
-      console.error('エラーメッセージ:', err instanceof Error ? err.message : err);
-      
-      const errorMessage = err instanceof Error ? err.message : '予約に失敗しました';
-      alert(`予約エラー: ${errorMessage}\n\n詳細はデベロッパーツールのコンソールを確認してください。`);
+      console.error("=== 予約エラー詳細 ===");
+      console.error("エラーオブジェクト:", err);
+      console.error("エラータイプ:", typeof err);
+      console.error(
+        "エラーメッセージ:",
+        err instanceof Error ? err.message : err
+      );
+
+      const errorMessage =
+        err instanceof Error ? err.message : "予約に失敗しました";
+      alert(
+        `予約エラー: ${errorMessage}\n\n詳細はデベロッパーツールのコンソールを確認してください。`
+      );
     }
   };
 
@@ -537,36 +562,87 @@ export default function ReservePage() {
               isDeleting={isDeleting}
             />
           ) : !showTimeSlots ? (
-              // 日付・時刻選択画面
-              <div>
-                <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
-                  まず日付を選択してください。
-                </p>
+            // 日付・時刻選択画面
+            <div>
+              <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
+                まず日付を選択してください。
+              </p>
 
-                {/* 日付選択 */}
+              {/* 日付選択 */}
+              <div className="mb-8">
+                <h3 className="text-lg font-bold mb-4 text-center text-gray-800 dark:text-gray-200">
+                  日付を選択
+                </h3>
+                <div className="max-w-md mx-auto relative">
+                  <select
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full p-4 pr-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-center text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer appearance-none"
+                  >
+                    <option
+                      value=""
+                      className="text-gray-500 dark:text-gray-400"
+                    >
+                      日付を選択してください
+                    </option>
+                    {availableDates.map((date) => (
+                      <option
+                        key={date.value}
+                        value={date.value}
+                        className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 py-2"
+                      >
+                        {date.label}
+                      </option>
+                    ))}
+                  </select>
+                  {/* カスタム矢印アイコン */}
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* 時間帯選択 */}
+              {selectedDate && (
                 <div className="mb-8">
                   <h3 className="text-lg font-bold mb-4 text-center text-gray-800 dark:text-gray-200">
-                    日付を選択
+                    時間帯を選択
                   </h3>
                   <div className="max-w-md mx-auto relative">
                     <select
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      value={selectedHour || ""}
+                      onChange={(e) =>
+                        setSelectedHour(
+                          e.target.value ? Number(e.target.value) : null
+                        )
+                      }
                       className="w-full p-4 pr-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-center text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer appearance-none"
                     >
                       <option
                         value=""
                         className="text-gray-500 dark:text-gray-400"
                       >
-                        日付を選択してください
+                        時間帯を選択してください
                       </option>
-                      {availableDates.map((date) => (
+                      {availableHours.map((hour) => (
                         <option
-                          key={date.value}
-                          value={date.value}
+                          key={hour.value}
+                          value={hour.value}
                           className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 py-2"
                         >
-                          {date.label}
+                          {hour.label}
                         </option>
                       ))}
                     </select>
@@ -588,219 +664,157 @@ export default function ReservePage() {
                     </div>
                   </div>
                 </div>
+              )}
 
-                {/* 時間帯選択 */}
-                {selectedDate && (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-bold mb-4 text-center text-gray-800 dark:text-gray-200">
-                      時間帯を選択
-                    </h3>
-                    <div className="max-w-md mx-auto relative">
-                      <select
-                        value={selectedHour || ""}
-                        onChange={(e) =>
-                          setSelectedHour(
-                            e.target.value ? Number(e.target.value) : null
-                          )
-                        }
-                        className="w-full p-4 pr-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-center text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer appearance-none"
-                      >
-                        <option
-                          value=""
-                          className="text-gray-500 dark:text-gray-400"
-                        >
-                          時間帯を選択してください
-                        </option>
-                        {availableHours.map((hour) => (
-                          <option
-                            key={hour.value}
-                            value={hour.value}
-                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 py-2"
-                          >
-                            {hour.label}
-                          </option>
-                        ))}
-                      </select>
-                      {/* カスタム矢印アイコン */}
-                      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                        <svg
-                          className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 検索ボタン */}
-                {selectedDate && selectedHour !== null && (
-                  <div className="text-center">
-                    <button
-                      onClick={() => fetchTimeSlots(selectedDate, selectedHour)}
-                      className="bg-green-500 dark:bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isTimeSlotsLoading}
-                    >
-                      {isTimeSlotsLoading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          <span>検索中...</span>
-                        </div>
-                      ) : (
-                        "タイムスロットを検索"
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // タイムスロット表示画面
-              <div>
-                <div className="mb-6 text-center">
-                  <p className="text-gray-600 dark:text-gray-300 mb-2">
-                    {
-                      availableDates.find((d) => d.value === selectedDate)
-                        ?.label
-                    }{" "}
-                    /{" "}
-                    {
-                      availableHours.find((h) => h.value === selectedHour)
-                        ?.label
-                    }
-                  </p>
+              {/* 検索ボタン */}
+              {selectedDate && selectedHour !== null && (
+                <div className="text-center">
                   <button
-                    onClick={() => {
-                      setShowTimeSlots(false);
-                      setSelectedDate("");
-                      setSelectedHour(null);
-                      setTimeSlots([]);
-                    }}
-                    className="text-green-600 dark:text-green-400 hover:underline text-sm"
+                    onClick={() => fetchTimeSlots(selectedDate, selectedHour)}
+                    className="bg-green-500 dark:bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isTimeSlotsLoading}
                   >
-                    ← 日付・時刻を変更
+                    {isTimeSlotsLoading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>検索中...</span>
+                      </div>
+                    ) : (
+                      "タイムスロットを検索"
+                    )}
                   </button>
                 </div>
-
-                <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
-                  ご希望の時間枠を選択してください。
+              )}
+            </div>
+          ) : (
+            // タイムスロット表示画面
+            <div>
+              <div className="mb-6 text-center">
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
+                  {availableDates.find((d) => d.value === selectedDate)?.label}{" "}
+                  /{" "}
+                  {availableHours.find((h) => h.value === selectedHour)?.label}
                 </p>
+                <button
+                  onClick={() => {
+                    setShowTimeSlots(false);
+                    setSelectedDate("");
+                    setSelectedHour(null);
+                    setTimeSlots([]);
+                  }}
+                  className="text-green-600 dark:text-green-400 hover:underline text-sm"
+                >
+                  ← 日付・時刻を変更
+                </button>
+              </div>
 
-                <div className="flex justify-center items-center gap-4 md:gap-6 mb-8 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-green-500 border border-green-600"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      予約可能
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-gray-500 border border-gray-600"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      予約不可 (当日枠)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-red-500 border border-red-600"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      他の方が予約済み
-                    </span>
-                  </div>
+              <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
+                ご希望の時間枠を選択してください。
+              </p>
+
+              <div className="flex justify-center items-center gap-4 md:gap-6 mb-8 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-green-500 border border-green-600"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    予約可能
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {timeSlots.length === 0 ? (
-                    <div className="col-span-full text-center py-8 opacity-0 animate-pulse">
-                      <div className="mb-4 animate-fade-in">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-                      <p
-                        className="text-gray-500 dark:text-gray-400 animate-fade-in"
-                        style={{ animationDelay: "200ms" }}
-                      >
-                        選択した時間帯にはタイムスロットがありません。
-                      </p>
-                    </div>
-                  ) : (
-                    timeSlots.map((slot, index) => {
-                      // UTC時刻を日本時間に変換してからHH:MM形式に変換
-                      const jstDate = convertUTCToJST(slot.slotTime);
-                      const timeString = formatJSTTime(jstDate);
-
-                      if (process.env.NODE_ENV === "development") {
-                        console.log(
-                          `Slot ${slot.id}: type=${slot.slotType}, status=${slot.status}`
-                        ); // デバッグ用ログ（開発環境のみ）
-                      }
-
-                      let slotClasses =
-                        "p-3 rounded-lg text-center text-white font-bold transition-all duration-300 transform shadow-md opacity-0 translate-y-4 hover:scale-105";
-                      let statusText = "";
-                      let onClick = () => {};
-
-                      // アニメーション用のスタイル
-                      const animationStyle = {
-                        animation: `slideInUp 0.6s ease-out ${
-                          index * 50
-                        }ms both`,
-                      };
-
-                      if (slot.slotType === "WALK_IN") {
-                        slotClasses +=
-                          " bg-gray-500 dark:bg-gray-600 cursor-not-allowed";
-                        statusText = "予約不要";
-                      } else {
-                        if (slot.status === "BOOKED") {
-                          slotClasses +=
-                            " bg-red-500 dark:bg-red-600 cursor-not-allowed";
-                          statusText = "他の方が予約済み";
-                        } else {
-                          slotClasses +=
-                            " bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 hover:-translate-y-1 cursor-pointer hover:shadow-lg";
-                          statusText = "予約できます";
-                          onClick = () => openModal(slot);
-                        }
-                      }
-
-                      return (
-                        <div
-                          key={slot.id}
-                          className={slotClasses}
-                          onClick={onClick}
-                          style={animationStyle}
-                        >
-                          <span className="block text-lg mb-1">
-                            {timeString}
-                          </span>
-                          <span className="block text-xs opacity-90">
-                            {statusText}
-                          </span>
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-gray-500 border border-gray-600"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    予約不可 (当日枠)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-red-500 border border-red-600"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    他の方が予約済み
+                  </span>
                 </div>
               </div>
-            )
-          }
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {timeSlots.length === 0 ? (
+                  <div className="col-span-full text-center py-8 opacity-0 animate-pulse">
+                    <div className="mb-4 animate-fade-in">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <p
+                      className="text-gray-500 dark:text-gray-400 animate-fade-in"
+                      style={{ animationDelay: "200ms" }}
+                    >
+                      選択した時間帯にはタイムスロットがありません。
+                    </p>
+                  </div>
+                ) : (
+                  timeSlots.map((slot, index) => {
+                    // UTC時刻を日本時間に変換してからHH:MM形式に変換
+                    const jstDate = convertUTCToJST(slot.slotTime);
+                    const timeString = formatJSTTime(jstDate);
+
+                    if (process.env.NODE_ENV === "development") {
+                      console.log(
+                        `Slot ${slot.id}: type=${slot.slotType}, status=${slot.status}`
+                      ); // デバッグ用ログ（開発環境のみ）
+                    }
+
+                    let slotClasses =
+                      "p-3 rounded-lg text-center text-white font-bold transition-all duration-300 transform shadow-md opacity-0 translate-y-4 hover:scale-105";
+                    let statusText = "";
+                    let onClick = () => {};
+
+                    // アニメーション用のスタイル
+                    const animationStyle = {
+                      animation: `slideInUp 0.6s ease-out ${index * 50}ms both`,
+                    };
+
+                    if (slot.slotType === "WALK_IN") {
+                      slotClasses +=
+                        " bg-gray-500 dark:bg-gray-600 cursor-not-allowed";
+                      statusText = "予約不要";
+                    } else {
+                      if (slot.status === "BOOKED") {
+                        slotClasses +=
+                          " bg-red-500 dark:bg-red-600 cursor-not-allowed";
+                        statusText = "他の方が予約済み";
+                      } else {
+                        slotClasses +=
+                          " bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 hover:-translate-y-1 cursor-pointer hover:shadow-lg";
+                        statusText = "予約できます";
+                        onClick = () => openModal(slot);
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={slot.id}
+                        className={slotClasses}
+                        onClick={onClick}
+                        style={animationStyle}
+                      >
+                        <span className="block text-lg mb-1">{timeString}</span>
+                        <span className="block text-xs opacity-90">
+                          {statusText}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 予約確認モーダル */}

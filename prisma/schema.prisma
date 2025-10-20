@@ -32,23 +32,20 @@ model Reservation {
   timeSlotId Int?      @unique
   lineUserId String?
   timeSlot   TimeSlot? @relation(fields: [timeSlotId], references: [id])
-  teams      Team[]
 
   @@index([timeSlotId])
   @@index([lineUserId])
 }
 
 model Team {
-  id             Int           @id @default(autoincrement())
-  name           String
-  headcount      Int
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  reservation_id Int
-  gameSessions   GameSession[]
-  players        Player[]
-  reservation    Reservation   @relation(fields: [reservation_id], references: [id])
-  teamScores     TeamScore[]
+  id           Int           @id @default(autoincrement())
+  name         String
+  headcount    Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  gameSessions GameSession[]
+  players      Player[]
+  teamScores   TeamScore[]
 }
 
 model Player {
@@ -90,11 +87,11 @@ model TeamScore {
 model PlayerScore {
   id            Int       @id @default(autoincrement())
   score         Int
-  player_id     Int
+  player_id     Int?
   team_score_id Int
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  player        Player    @relation(fields: [player_id], references: [id])
+  player        Player?   @relation(fields: [player_id], references: [id])
   teamScore     TeamScore @relation(fields: [team_score_id], references: [id])
 
   @@index([player_id])
