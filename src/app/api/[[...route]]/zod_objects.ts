@@ -299,6 +299,7 @@ export const createPlayer = z.object({
     .number()
     .int()
     .positive()
+    .nullable()
     .openapi({ example: 1, description: "チームID" }),
 });
 
