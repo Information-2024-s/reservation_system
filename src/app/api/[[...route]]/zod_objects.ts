@@ -284,6 +284,7 @@ export const player = z.object({
     .number()
     .int()
     .positive()
+    .nullable()
     .openapi({ example: 1, description: "チームID" }),
   createdAt: z
     .string()

@@ -25,6 +25,10 @@ const nextConfig = {
         destination: '/site/index.html'
       },
       {
+        source: '/index.html',
+        destination: '/site/index.html'
+      },
+      {
         source: '/access.html',
         destination: '/site/access.html'
       },
