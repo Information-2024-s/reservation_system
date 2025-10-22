@@ -33,7 +33,9 @@ app.openapi(getTeamsRoute, async (c) => {
     });
 
     const formattedTeams = teams.map((team) => ({
-        ...team,
+        id: team.id,
+        name: team.name,
+        headcount: team.headcount,
         createdAt: team.createdAt.toISOString(),
         updatedAt: team.updatedAt.toISOString(),
     }));
@@ -84,7 +86,9 @@ app.openapi(getTeamRoute, async (c) => {
     }
 
     const formattedTeam = {
-        ...teamRecord,
+        id: teamRecord.id,
+        name: teamRecord.name,
+        headcount: teamRecord.headcount,
         createdAt: teamRecord.createdAt.toISOString(),
         updatedAt: teamRecord.updatedAt.toISOString(),
     };
@@ -138,7 +142,6 @@ app.openapi(createTeamRoute, async (c) => {
     const teamData = {
         name: data.name,
         headcount: data.headcount,
-        reservation_id: data.reservation_id,
     };
     
     const newTeam = await prisma.team.create({
@@ -146,7 +149,9 @@ app.openapi(createTeamRoute, async (c) => {
     });
 
     const formattedTeam = {
-        ...newTeam,
+        id: newTeam.id,
+        name: newTeam.name,
+        headcount: newTeam.headcount,
         createdAt: newTeam.createdAt.toISOString(),
         updatedAt: newTeam.updatedAt.toISOString(),
     };
@@ -244,7 +249,9 @@ app.openapi(updateTeamRoute, async (c) => {
     }
 
     const formattedTeam = {
-        ...updatedTeam,
+        id: updatedTeam.id,
+        name: updatedTeam.name,
+        headcount: updatedTeam.headcount,
         createdAt: updatedTeam.createdAt.toISOString(),
         updatedAt: updatedTeam.updatedAt.toISOString(),
     };

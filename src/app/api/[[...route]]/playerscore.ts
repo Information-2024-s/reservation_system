@@ -29,15 +29,14 @@ const getPlayerScoresRoute = createRoute({
 
 app.openapi(getPlayerScoresRoute, async (c) => {
     const playerScores = await prisma.playerScore.findMany({
-        include: {
-            player: true,
-            teamScore: true,
-        },
         orderBy: { createdAt: 'desc' },
     });
 
     const formattedPlayerScores = playerScores.map((playerScore) => ({
-        ...playerScore,
+        id: playerScore.id,
+        player_id: playerScore.player_id,
+        team_score_id: playerScore.team_score_id,
+        score: playerScore.score,
         createdAt: playerScore.createdAt.toISOString(),
         updatedAt: playerScore.updatedAt.toISOString(),
     }));
@@ -81,10 +80,6 @@ app.openapi(getPlayerScoreRoute, async (c) => {
 
     const playerScoreRecord = await prisma.playerScore.findUnique({
         where: { id },
-        include: {
-            player: true,
-            teamScore: true,
-        },
     });
 
     if (!playerScoreRecord) {
@@ -92,7 +87,10 @@ app.openapi(getPlayerScoreRoute, async (c) => {
     }
 
     const formattedPlayerScore = {
-        ...playerScoreRecord,
+        id: playerScoreRecord.id,
+        player_id: playerScoreRecord.player_id,
+        team_score_id: playerScoreRecord.team_score_id,
+        score: playerScoreRecord.score,
         createdAt: playerScoreRecord.createdAt.toISOString(),
         updatedAt: playerScoreRecord.updatedAt.toISOString(),
     };
@@ -145,7 +143,10 @@ app.openapi(createPlayerScoreRoute, async (c) => {
     });
 
     const formattedPlayerScore = {
-        ...newPlayerScore,
+        id: newPlayerScore.id,
+        player_id: newPlayerScore.player_id,
+        team_score_id: newPlayerScore.team_score_id,
+        score: newPlayerScore.score,
         createdAt: newPlayerScore.createdAt.toISOString(),
         updatedAt: newPlayerScore.updatedAt.toISOString(),
     };
@@ -210,7 +211,10 @@ app.openapi(updatePlayerScoreRoute, async (c) => {
     });
 
     const formattedPlayerScore = {
-        ...updatedPlayerScore,
+        id: updatedPlayerScore.id,
+        player_id: updatedPlayerScore.player_id,
+        team_score_id: updatedPlayerScore.team_score_id,
+        score: updatedPlayerScore.score,
         createdAt: updatedPlayerScore.createdAt.toISOString(),
         updatedAt: updatedPlayerScore.updatedAt.toISOString(),
     };
