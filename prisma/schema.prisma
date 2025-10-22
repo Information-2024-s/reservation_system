@@ -54,7 +54,7 @@ model Player {
   team_id      Int
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  team         Team          @relation(fields: [team_id], references: [id])
+  team         Team?         @relation(fields: [team_id], references: [id])
   playerScores PlayerScore[]
 }
 
@@ -85,14 +85,14 @@ model TeamScore {
 }
 
 model PlayerScore {
-  id            Int       @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   score         Int
   player_id     Int?
-  team_score_id Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  player        Player?   @relation(fields: [player_id], references: [id])
-  teamScore     TeamScore @relation(fields: [team_score_id], references: [id])
+  team_score_id Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  player        Player?     @relation(fields: [player_id], references: [id])
+  teamScore     TeamScore?  @relation(fields: [team_score_id], references: [id])
 
   @@index([player_id])
   @@index([team_score_id])

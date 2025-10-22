@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" data-name="レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1500 1500">
+  <!-- Generator: Adobe Illustrator 29.4.0, SVG Export Plug-In . SVG Version: 2.1.0 Build 152)  -->
+  <defs>
+    <style>
+      .st0 {
+        stroke-width: 1.16px;
+      }
+
+      .st0, .st1, .st2, .st3 {
+        fill: #fff;
+        stroke: #fff;
+        stroke-miterlimit: 10;
+      }
+
+      .st1 {
+        letter-spacing: .35em;
+      }
+
+      .st1, .st3 {
+        font-family: QubeGenix, QubeGenix;
+        font-size: 29.39px;
+        stroke-width: 1.62px;
+      }
+
+      .st2 {
+        stroke-width: 5.8px;
+      }
+
+      .st3 {
+        letter-spacing: .34em;
+      }
+    </style>
+  </defs>
+  <text/>
+  <path class="st0" d="M485.99,674.08"/>
+  <text/>
+  <g>
+    <text class="st3" transform="translate(535.11 878.21) scale(1.18 1)"><tspan x="0" y="0">L</tspan></text>
+    <text class="st3" transform="translate(577.49 878.21) scale(1.18 1)"><tspan x="0" y="0">A</tspan></text>
+    <text class="st3" transform="translate(625.15 878.21) scale(1.18 1)"><tspan x="0" y="0">B</tspan></text>
+    <text class="st3" transform="translate(666.74 878.03) scale(1.18 1)"><tspan x="0" y="0">O</tspan></text>
+    <text class="st1" transform="translate(715.03 878.42) scale(1.18 1)"><tspan x="0" y="0">R</tspan></text>
+    <text class="st1" transform="translate(759.31 877.83) scale(1.18 1)"><tspan x="0" y="0">A</tspan></text>
+    <text class="st1" transform="translate(805.23 879.15) scale(1.18 1)"><tspan x="0" y="0">T</tspan></text>
+    <text class="st1" transform="translate(848.56 878.42) scale(1.18 1)"><tspan x="0" y="0">O</tspan></text>
+    <text class="st1" transform="translate(896.85 878.42) scale(1.18 1)"><tspan x="0" y="0">R</tspan></text>
+    <text class="st1" transform="translate(942.45 878.21) scale(1.18 1)"><tspan x="0" y="0">Y</tspan></text>
+  </g>
+  <polygon class="st2" points="454.55 672.44 250 876.99 454.55 876.99 431.82 854.26 318.18 854.26 477.27 695.17 613.64 695.17 500 808.81 545.45 808.81 681.82 672.44 454.55 672.44"/>
+  <polygon class="st2" points="727.27 672.44 590.91 808.81 636.36 808.81 772.73 672.44 727.27 672.44"/>
+  <polygon class="st2" points="1045.45 876.99 1250 876.99 1045.45 672.44 818.18 672.44 681.82 808.81 727.27 808.81 840.91 695.17 931.82 695.17 931.82 729.04 965.91 729.04 965.91 695.17 1022.73 695.17 1181.82 854.26 1068.18 854.26 1045.45 876.99"/>
+  <path class="st2" d="M965.9,774.92h-33.46c-.12,0-.23.02-.36.02-.05,0-.09,0-.14,0-.04,0-.08.01-.13.02v33.85l34.09,22.73v-56.61s0,0,0,0h0Z"/>
+  <path class="st2" d="M965.91,740.62h-34.09s-112.04,0-112.04,0l-22.73,22.73h134.77s0,.01,0,.01h0s.25-.01.25-.01c0,0,0,0,.01,0s0,0,.01,0h33.59c.12,0,.23-.02.35-.02s.24.01.35.02h10.88v-22.73h-11.36Z"/>
+  <path class="st0" d="M750,577.6h0c0,22.41,18.16,40.57,40.57,40.57h0,0c-22.41,0-40.57,18.16-40.57,40.57h0s0,0,0,0c0-22.41-18.16-40.57-40.57-40.57h0,0c22.41,0,40.57-18.16,40.57-40.57h0Z"/>
+  <polygon class="st0" points="1048.04 851.38 1019.59 879.83 1029.07 879.83 1057.53 851.38 1048.04 851.38"/>
+  <polygon class="st0" points="453.71 851.38 482.17 879.83 472.68 879.83 444.23 851.38 453.71 851.38"/>
+</svg>

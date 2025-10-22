@@ -236,6 +236,7 @@ export const playerScore = z.object({
     .number()
     .int()
     .positive()
+    .nullable()
     .openapi({ example: 1, description: "チームスコアID" }),
   score: z.number().int().openapi({ example: 25, description: "スコア" }),
   createdAt: z
@@ -258,6 +259,7 @@ export const createPlayerScore = z.object({
     .number()
     .int()
     .positive()
+    .nullable()
     .openapi({ example: 1, description: "チームスコアID" }),
   score: z.number().int().openapi({ example: 25, description: "スコア" }),
 });
