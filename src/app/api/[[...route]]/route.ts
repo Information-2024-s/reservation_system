@@ -1,14 +1,10 @@
-import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
-import team from './team'
-import player from './player'
 import reservation from './reservation'
 import timeslot from './timeslot'
 import teamscore from './teamscore'
 import playerscore from './playerscore'
-import gamesession from './gamesession'
 import line from './line'
 
 const app = new OpenAPIHono().basePath('/api');
@@ -28,7 +24,7 @@ app.get('/specification',
       info: {
         title: 'Reservation System API',
         version: '1.0.0',
-        description: 'API for managing reservations, teams, users, game sessions, and scores',
+        description: 'API for managing reservations and scores',
       },
     });
     return c.json(spec);
@@ -45,14 +41,14 @@ app.get('/doc',
 
 
 // API routes
-app.route("/teams", team);
-app.route("/players", player);
 app.route("/reservations", reservation);
 app.route("/timeslots", timeslot);
 app.route("/teamscores", teamscore);
 app.route("/playerscores", playerscore);
-app.route("/gamesessions", gamesession);
 app.route("/line", line);
+app.onError((err, c) => {
+  return c.json({ error: err.message }, 500)
+})
 app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })

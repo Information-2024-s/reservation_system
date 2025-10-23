@@ -172,17 +172,23 @@ export const teamScore = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "チームスコアID" }),
-  team_id: z
+  teamName: z
+    .string()
+    .openapi({ example: "チームA", description: "チーム名" }),
+  headcount: z
     .number()
     .int()
     .positive()
-    .openapi({ example: 1, description: "チームID" }),
+    .openapi({ example: 4, description: "人数" }),
+  gameSessionName: z
+    .string()
+    .openapi({ example: "ゲームセッション1", description: "ゲームセッション名" }),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .openapi({ example: "説明テキスト", description: "説明" }),
   score: z.number().int().openapi({ example: 100, description: "スコア" }),
-  game_session_id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "ゲームセッションID" }),
   createdAt: z
     .string()
     .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
@@ -192,31 +198,50 @@ export const teamScore = z.object({
 });
 
 export const createTeamScore = z.object({
-  team_id: z
+  teamName: z
+    .string()
+    .openapi({ example: "チームA", description: "チーム名" }),
+  headcount: z
     .number()
     .int()
     .positive()
-    .openapi({ example: 1, description: "チームID" }),
+    .openapi({ example: 4, description: "人数" }),
+  gameSessionName: z
+    .string()
+    .openapi({ example: "ゲームセッション1", description: "ゲームセッション名" }),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .openapi({ example: "説明テキスト", description: "説明" }),
   score: z.number().int().openapi({ example: 100, description: "スコア" }),
-  game_session_id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "ゲームセッションID" }),
 });
 
 export const updateTeamScore = z.object({
+  teamName: z
+    .string()
+    .optional()
+    .openapi({ example: "チームB", description: "チーム名" }),
+  headcount: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .openapi({ example: 5, description: "人数" }),
+  gameSessionName: z
+    .string()
+    .optional()
+    .openapi({ example: "ゲームセッション2", description: "ゲームセッション名" }),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .openapi({ example: "更新された説明", description: "説明" }),
   score: z
     .number()
     .int()
     .optional()
     .openapi({ example: 95, description: "スコア" }),
-  game_session_id: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .openapi({ example: 2, description: "ゲームセッションID" }),
 });
 
 // UserScore Zod Object (PlayerScore対応)
@@ -226,17 +251,13 @@ export const playerScore = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "プレイヤースコアID" }),
-  player_id: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .openapi({ example: 1, description: "プレイヤーID" }),
+  playerName: z
+    .string()
+    .openapi({ example: "太郎", description: "プレイヤー名" }),
   team_score_id: z
     .number()
     .int()
     .positive()
-    .nullable()
     .openapi({ example: 1, description: "チームスコアID" }),
   score: z.number().int().openapi({ example: 25, description: "スコア" }),
   createdAt: z
@@ -248,23 +269,22 @@ export const playerScore = z.object({
 });
 
 export const createPlayerScore = z.object({
-  player_id: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .optional()
-    .openapi({ example: 1, description: "プレイヤーID" }),
+  playerName: z
+    .string()
+    .openapi({ example: "太郎", description: "プレイヤー名" }),
   team_score_id: z
     .number()
     .int()
     .positive()
-    .nullable()
     .openapi({ example: 1, description: "チームスコアID" }),
   score: z.number().int().openapi({ example: 25, description: "スコア" }),
 });
 
 export const updatePlayerScore = z.object({
+  playerName: z
+    .string()
+    .optional()
+    .openapi({ example: "次郎", description: "プレイヤー名" }),
   score: z
     .number()
     .int()

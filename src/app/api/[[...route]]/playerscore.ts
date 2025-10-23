@@ -33,10 +33,7 @@ app.openapi(getPlayerScoresRoute, async (c) => {
     });
 
     const formattedPlayerScores = playerScores.map((playerScore) => ({
-        id: playerScore.id,
-        player_id: playerScore.player_id,
-        team_score_id: playerScore.team_score_id,
-        score: playerScore.score,
+        ...playerScore,
         createdAt: playerScore.createdAt.toISOString(),
         updatedAt: playerScore.updatedAt.toISOString(),
     }));
@@ -87,10 +84,7 @@ app.openapi(getPlayerScoreRoute, async (c) => {
     }
 
     const formattedPlayerScore = {
-        id: playerScoreRecord.id,
-        player_id: playerScoreRecord.player_id,
-        team_score_id: playerScoreRecord.team_score_id,
-        score: playerScoreRecord.score,
+        ...playerScoreRecord,
         createdAt: playerScoreRecord.createdAt.toISOString(),
         updatedAt: playerScoreRecord.updatedAt.toISOString(),
     };
@@ -143,10 +137,7 @@ app.openapi(createPlayerScoreRoute, async (c) => {
     });
 
     const formattedPlayerScore = {
-        id: newPlayerScore.id,
-        player_id: newPlayerScore.player_id,
-        team_score_id: newPlayerScore.team_score_id,
-        score: newPlayerScore.score,
+        ...newPlayerScore,
         createdAt: newPlayerScore.createdAt.toISOString(),
         updatedAt: newPlayerScore.updatedAt.toISOString(),
     };
@@ -211,10 +202,7 @@ app.openapi(updatePlayerScoreRoute, async (c) => {
     });
 
     const formattedPlayerScore = {
-        id: updatedPlayerScore.id,
-        player_id: updatedPlayerScore.player_id,
-        team_score_id: updatedPlayerScore.team_score_id,
-        score: updatedPlayerScore.score,
+        ...updatedPlayerScore,
         createdAt: updatedPlayerScore.createdAt.toISOString(),
         updatedAt: updatedPlayerScore.updatedAt.toISOString(),
     };

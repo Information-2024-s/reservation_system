@@ -17,7 +17,6 @@ const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
 const nextConfig = {
   allowedDevOrigins: allowedDevOrigins.length > 0 ? allowedDevOrigins : defaultAllowedOrigins,
   reactStrictMode: true,
-  swcMinify: true,
   async rewrites() {
     return [
       {
