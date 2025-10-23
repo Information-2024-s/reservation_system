@@ -14,6 +14,13 @@ async function main() {
   await prisma.teamScore.deleteMany({});
   console.log("Cleared existing data.");
 
+  // シーケンスを0からリセット
+  await prisma.$executeRaw`ALTER SEQUENCE "TeamScore_id_seq" RESTART WITH 1`;
+  await prisma.$executeRaw`ALTER SEQUENCE "PlayerScore_id_seq" RESTART WITH 1`;
+  await prisma.$executeRaw`ALTER SEQUENCE "TimeSlot_id_seq" RESTART WITH 1`;
+  await prisma.$executeRaw`ALTER SEQUENCE "Reservation_id_seq" RESTART WITH 1`;
+  console.log("Reset sequences to start from 1.");
+
   // --- 設定値 ---
   const DATES_TO_SEED = ["2025-11-01", "2025-11-02"]; // 対象の日付 (年は適宜変更してください)
   const START_HOUR = 10; // 開始時刻 (10時)
