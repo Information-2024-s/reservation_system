@@ -2,12 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/*
 generator erd {
   provider                  = "prisma-erd-generator"
   output                    = "ERD.md"
   includeRelationFromFields = "true"
   theme                     = "forest"
 }
+*/
 
 datasource db {
   provider = "postgresql"
@@ -37,64 +39,31 @@ model Reservation {
   @@index([lineUserId])
 }
 
-model Team {
-  id           Int           @id @default(autoincrement())
-  name         String
-  headcount    Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  gameSessions GameSession[]
-  players      Player[]
-  teamScores   TeamScore[]
-}
-
-model Player {
-  id           Int           @id @default(autoincrement())
-  name         String?
-  team_id      Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  team         Team          @relation(fields: [team_id], references: [id])
-  playerScores PlayerScore[]
-}
-
-model GameSession {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  team_id     Int
-  team        Team        @relation(fields: [team_id], references: [id])
-  teamScores  TeamScore[]
-}
-
 model TeamScore {
   id              Int           @id @default(autoincrement())
+  teamName        String
+  headcount       Int
+  gameSessionName String
+  description     String?
   score           Int
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  game_session_id Int
-  team_id         Int
   playerScores    PlayerScore[]
-  gameSession     GameSession   @relation(fields: [game_session_id], references: [id])
-  team            Team          @relation(fields: [team_id], references: [id])
 
-  @@index([team_id])
-  @@index([game_session_id])
+  @@index([teamName])
+  @@index([gameSessionName])
 }
 
 model PlayerScore {
-  id            Int       @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
+  playerName    String
   score         Int
-  player_id     Int?
   team_score_id Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  player        Player?   @relation(fields: [player_id], references: [id])
-  teamScore     TeamScore @relation(fields: [team_score_id], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  teamScore     TeamScore  @relation(fields: [team_score_id], references: [id], onDelete: Cascade)
 
-  @@index([player_id])
+  @@index([playerName])
   @@index([team_score_id])
 }
 

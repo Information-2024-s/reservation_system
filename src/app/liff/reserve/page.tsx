@@ -4,9 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useGlobalContext } from "@/hooks/useGlobalContexts";
 import Link from "next/link";
 import ReservationModal from "./ReservationModal";
-import TeamRegistration, { TeamData } from "./TeamRegistration";
 import ReservationConfirmation from "./ReservationConfirmation";
-import TeamEditModal from "./TeamEditModal";
 import { TimeSlot, convertUTCToJST, formatJSTTime } from "./types";
 
 export default function ReservePage() {
@@ -84,9 +82,7 @@ export default function ReservePage() {
     useState<UserReservation | null>(null);
   const [isLoadingUserReservation, setIsLoadingUserReservation] =
     useState(false);
-  const [isTeamEditModalOpen, setIsTeamEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSavingTeamEdit, setIsSavingTeamEdit] = useState(false);
 
   // 選択状態の管理
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -95,7 +91,6 @@ export default function ReservePage() {
 
   // モーダル関連の状態
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isTeamRegistrationOpen, setIsTeamRegistrationOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
     null
   );
@@ -166,87 +161,7 @@ export default function ReservePage() {
     }
   };
 
-  // チーム情報を変更
-  const handleEditTeam = async (
-    teamId: number,
-    teamData: {
-      name: string;
-      headcount: number;
-      memberNames: string[];
-    }
-  ) => {
-    console.log("=== handleEditTeam が呼ばれました ===");
-    console.log("teamId:", teamId);
-    console.log("teamData:", teamData);
-
-    setIsSavingTeamEdit(true);
-    try {
-      const requestBody = JSON.stringify(teamData);
-      console.log("リクエストボディ:", requestBody);
-
-      let response;
-
-      if (teamId === -1) {
-        // 新規チーム作成
-        console.log("新規チーム作成API呼び出し");
-        response = await fetch(
-          `/api/reservations/${userReservation?.reservation.id}/add-team`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: requestBody,
-          }
-        );
-      } else {
-        // 既存チーム編集
-        console.log("既存チーム編集API呼び出し");
-        response = await fetch(`/api/teams/${teamId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: requestBody,
-        });
-      }
-
-      console.log("レスポンスステータス:", response.status);
-
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log("レスポンスデータ:", responseData);
-        alert(
-          teamId === -1
-            ? "チーム情報を登録しました。"
-            : "チーム情報を変更しました。"
-        );
-        setIsTeamEditModalOpen(false);
-        // 予約情報を再取得
-        await fetchUserReservation();
-      } else {
-        const errorData = await response.json();
-        console.error("エラーレスポンス:", errorData);
-        throw new Error(
-          errorData.message ||
-            (teamId === -1
-              ? "チーム情報の登録に失敗しました"
-              : "チーム情報の変更に失敗しました")
-        );
-      }
-    } catch (err) {
-      console.error("Error updating team:", err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : teamId === -1
-          ? "チーム情報の登録に失敗しました"
-          : "チーム情報の変更に失敗しました"
-      );
-    } finally {
-      setIsSavingTeamEdit(false);
-    }
-  }; // TimeSlots APIからデータを取得（フィルタリング付き）
+  // TimeSlots APIからデータを取得（フィルタリング付き）
   const fetchTimeSlots = async (date: string, hour: number) => {
     setIsTimeSlotsLoading(true);
     setError(null);
@@ -287,40 +202,7 @@ export default function ReservePage() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setIsTeamRegistrationOpen(false);
     setSelectedTimeSlot(null);
-  };
-
-  const handleNext = () => {
-    setIsModalOpen(false);
-    setIsTeamRegistrationOpen(true);
-  };
-
-  const handleBackToModal = () => {
-    setIsTeamRegistrationOpen(false);
-    setIsModalOpen(true);
-  };
-
-  const handleTeamReservationComplete = async (teamData: TeamData) => {
-    if (selectedTimeSlot) {
-      // チーム情報付きの予約処理成功
-      alert(
-        `チーム予約が完了しました！\nチーム名: ${
-          teamData.teamName
-        }\nメンバー数: ${
-          teamData.memberCount
-        }人\nメンバー: ${teamData.memberNames.join(
-          ", "
-        )}\n時間: ${formatJSTTime(convertUTCToJST(selectedTimeSlot.slotTime))}`
-      );
-      closeModal();
-      // 予約後に既存予約情報を再取得
-      await fetchUserReservation();
-      // 予約後にタイムスロットを再取得
-      if (selectedDate && selectedHour !== null) {
-        fetchTimeSlots(selectedDate, selectedHour);
-      }
-    }
   };
 
   // チーム情報なしで直接予約
@@ -557,7 +439,6 @@ export default function ReservePage() {
             // 既存予約がある場合は確認画面を表示
             <ReservationConfirmation
               userReservation={userReservation}
-              onTeamEdit={() => setIsTeamEditModalOpen(true)}
               onDelete={handleDeleteReservation}
               isDeleting={isDeleting}
             />
@@ -825,31 +706,8 @@ export default function ReservePage() {
           profile={profile}
           availableDates={availableDates}
           onClose={closeModal}
-          onNext={handleNext}
           onReserveDirect={handleDirectReservation}
         />
-
-        {/* チーム情報登録モーダル */}
-        <TeamRegistration
-          isOpen={isTeamRegistrationOpen}
-          selectedTimeSlot={selectedTimeSlot}
-          selectedDate={selectedDate}
-          profile={profile}
-          availableDates={availableDates}
-          onBack={handleBackToModal}
-          onComplete={handleTeamReservationComplete}
-        />
-
-        {/* チーム編集モーダル */}
-        {userReservation && (
-          <TeamEditModal
-            userReservation={userReservation}
-            isOpen={isTeamEditModalOpen}
-            onClose={() => setIsTeamEditModalOpen(false)}
-            onSave={handleEditTeam}
-            isSaving={isSavingTeamEdit}
-          />
-        )}
       </div>
     </div>
   );

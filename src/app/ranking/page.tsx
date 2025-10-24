@@ -1,73 +1,200 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-interface RankingItem {
+interface PlayerScoreData {
   id: number;
-  name: string;
-  score: number; // score.tsのランキングエンドポイントから取得
+  playerName: string;
+  score: number;
+  team_score_id: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export default function RankingPage() {
-  const [ranking, setRanking] = useState<RankingItem[]>([]);
+interface TeamScoreData {
+  id: number;
+  teamName: string;
+  headcount: number;
+  gameSessionName: string;
+  description: string | null;
+  score: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TeamRanking {
+  teamName: string;
+  headcount: number;
+  totalScore: number;
+  count: number;
+  gameSessionName: string;
+}
+
+function RankingContent() {
+  const searchParams = useSearchParams();
+  const [playerScores, setPlayerScores] = useState<PlayerScoreData[]>([]);
+  const [teamScores, setTeamScores] = useState<TeamScoreData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'team1' | 'team2' | 'team3' | 'team4'>('team1');
+
+  // クエリパラメータから設定を取得
+  const autoSwitch = searchParams.get('auto') === 'true'; // デフォルトfalse
+  const intervalSeconds = parseInt(searchParams.get('interval') || '10', 10); // デフォルト10秒
+
+  // 自動タブ切り替え
+  useEffect(() => {
+    if (!autoSwitch) return; // 自動切り替えが無効の場合は何もしない
+
+    const tabs: ('team1' | 'team2' | 'team3' | 'team4')[] = ['team1', 'team2', 'team3', 'team4'];
+    const AUTO_SWITCH_INTERVAL = intervalSeconds * 1000; // 秒をミリ秒に変換
+
+    const interval = setInterval(() => {
+      setActiveTab(currentTab => {
+        const currentIndex = tabs.indexOf(currentTab);
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        return tabs[nextIndex];
+      });
+    }, AUTO_SWITCH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [autoSwitch, intervalSeconds]);
 
   useEffect(() => {
-    const fetchRanking = async () => {
+    const fetchScores = async () => {
       try {
-        const response = await fetch('/api/scores');
-        if (!response.ok) {
-          throw new Error('ランキングデータの取得に失敗しました');
+        setLoading(true);
+        console.log('Starting fetch...');
+        
+        // PlayerScoreとTeamScoreを並列取得
+        const [playerRes, teamRes] = await Promise.all([
+          fetch('/api/playerscores'),
+          fetch('/api/teamscores')
+        ]);
+
+        console.log('playerRes.ok:', playerRes.ok, 'teamRes.ok:', teamRes.ok);
+
+        if (!playerRes.ok || !teamRes.ok) {
+          throw new Error('スコアの取得に失敗しました');
         }
-        const data = await response.json();
-        setRanking(data);
+
+        const playerData = await playerRes.json();
+        const teamData = await teamRes.json();
+
+        console.log('Fetched Player Scores:', playerData);
+        console.log('Fetched Team Scores:', teamData);
+        console.log('Player Scores length:', playerData.length);
+        console.log('Team Scores length:', teamData.length);
+
+        setPlayerScores(playerData);
+        setTeamScores(teamData);
+        
+        console.log('State updated, loading will be set to false');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました');
+        console.error('Error fetching scores:', err);
+        setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
       } finally {
         setLoading(false);
+        console.log('Loading set to false');
       }
     };
 
-    fetchRanking();
+    fetchScores();
   }, []);
 
-  const getRankColor = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return 'from-yellow-400 to-yellow-600'; // 金
-      case 2:
-        return 'from-gray-300 to-gray-500'; // 銀
-      case 3:
-        return 'from-orange-400 to-orange-600'; // 銅
-      default:
-        return 'from-blue-500 to-blue-700'; // 通常
-    }
+  // チーム人数別にスコアを集計してランキング作成
+  const getTeamRankings = (headcount: number): TeamRanking[] => {
+    const teamMap = new Map<string, TeamRanking>();
+
+    teamScores
+      .filter(score => score.headcount === headcount)
+      .forEach(score => {
+        const key = `${score.teamName}_${score.gameSessionName}`;
+        const existing = teamMap.get(key);
+        if (existing) {
+          existing.totalScore += score.score;
+          existing.count += 1;
+        } else {
+          teamMap.set(key, {
+            teamName: score.teamName,
+            headcount: score.headcount,
+            gameSessionName: score.gameSessionName,
+            totalScore: score.score,
+            count: 1
+          });
+        }
+      });
+
+    return Array.from(teamMap.values())
+      .sort((a, b) => b.totalScore - a.totalScore);
   };
 
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return '🥇'; // 金メダル（王者の称号）
-      case 2:
-        return '🥈'; // ロボット（ガンダム支部）
-      case 3:
-        return '🥉'; // 建設（ジオラマ同盟）
-      default:
-        return '🏅'; // 歯車（その他）
+  const renderTeamRankings = (headcount: number) => {
+    const rankings = getTeamRankings(headcount);
+    
+    if (rankings.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-[#666] text-lg tracking-wider">NO DATA AVAILABLE</p>
+        </div>
+      );
     }
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-[#1a1a1a] border-b-2 border-[#4a90e2]" style={{ boxShadow: '0 2px 15px rgba(74, 144, 226, 0.3)' }}>
+            <tr>
+              <th className="px-6 py-4 text-left text-sm font-bold text-[#4a90e2] uppercase tracking-wider">順位</th>
+              <th className="px-6 py-4 text-left text-sm font-bold text-[#4a90e2] uppercase tracking-wider">チーム名</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-[#4a90e2] uppercase tracking-wider">スコア</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankings.map((ranking, index) => (
+              <tr 
+                key={`${ranking.teamName}_${ranking.gameSessionName}`} 
+                className={`border-b border-[#3a3a3a] transition-all duration-300 ${
+                  index % 2 === 0 ? 'bg-[#2a2a2a]' : 'bg-[#222]'
+                } hover:bg-[#333] hover:shadow-[0_0_15px_rgba(74,144,226,0.2)]`}
+              >
+                <td className="px-6 py-5">
+                  <span className={`font-bold text-lg ${
+                    index === 0 ? 'text-[#FFD700]' :
+                    index === 1 ? 'text-[#C0C0C0]' :
+                    index === 2 ? 'text-[#CD7F32]' :
+                    'text-[#e0e0e0]'
+                  }`} style={
+                    index < 3 ? { textShadow: `0 0 10px ${
+                      index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : '#CD7F32'
+                    }` } : {}
+                  }>
+                    {index + 1}
+                    {index === 0 && ' 🥇'}
+                    {index === 1 && ' 🥈'}
+                    {index === 2 && ' 🥉'}
+                  </span>
+                </td>
+                <td className="px-6 py-5 font-bold text-[#e0e0e0] tracking-wide">{ranking.teamName}</td>
+                <td className="px-6 py-5 text-right font-bold text-[#4a90e2] text-lg" 
+                    style={{ textShadow: '0 0 10px rgba(74, 144, 226, 0.5)' }}>
+                  {ranking.totalScore.toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   if (loading) {
     return (
-      <div className="ranking-container">
-        <div className="ranking-header">
-          <h1>スコアランキング</h1>
-        </div>
-        <div className="loading">
-          データを読み込んでいます...
+      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#4a90e2] border-t-transparent"></div>
+          <p className="mt-6 text-[#e0e0e0] text-lg font-semibold tracking-wider">LOADING...</p>
         </div>
       </div>
     );
@@ -75,288 +202,160 @@ export default function RankingPage() {
 
   if (error) {
     return (
-      <div className="ranking-container">
-        <div className="ranking-header">
-          <h1>スコアランキング</h1>
-        </div>
-        <div className="error">
-          エラー: {error}
+      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
+        <div className="bg-[#2a2a2a] border-2 border-red-500 rounded-lg p-8 max-w-md shadow-[0_0_20px_rgba(239,68,68,0.3)]">
+          <h2 className="text-red-400 font-bold text-xl mb-3 tracking-wide">ERROR</h2>
+          <p className="text-[#e0e0e0]">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="ranking-container">
-      <div className="ranking-header">
-        <h1>順位　階級　名前　最高スコア</h1>
-      </div>
-      
-      <div className="ranking-list">
-        {ranking.map((item, index) => (
-          <div 
-            key={item.id} 
-            className={`ranking-item rank-${index + 1 <= 3 ? 'top' : 'normal'}`}
-          >
-            <div className={`rank-badge bg-gradient-to-r ${getRankColor(index + 1)}`}>
-              <span className="rank-number">{index + 1}位</span>
-            </div>
-            
-            <div className="player-info">
-              <div className="rank-icon">{getRankIcon(index + 1)}</div>
-              <div className="player-details">
-            <div className="player-name">{item.name}</div>
-            {index + 1 <= 3 && (
-              <div className="rank-title">
-                {index + 1 === 1 && '王者の称号'}
-                {index + 1 === 2 && 'ガンダム支部'}
-                {index + 1 === 3 && 'ジオラマ同盟'}
-              </div>
-            )}
-            {index + 1 === 4 && (
-              <div className="rank-title">First世代</div>
-            )}
-            {index + 1 === 5 && (
-              <div className="rank-title">テクニカルラボ</div>
-            )}
-            {index + 1 === 23 && (
-              <div className="rank-title">ジオラマ支部特別足回復</div>
-            )}
-              </div>
-            </div>
-            
-            <div className="score-display">
-              <div className="total-score">
-            {item.score.toLocaleString()}pt
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#181818] py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* タイトル */}
+        <h1 className="text-5xl md:text-6xl font-bold text-[#e0e0e0] mb-12 text-center tracking-wider"
+            style={{ 
+              fontFamily: 'system-ui, sans-serif',
+              textShadow: '0 0 20px rgba(74, 144, 226, 0.5), 0 0 40px rgba(74, 144, 226, 0.3)' 
+            }}>
+          🏆 RANKING
+        </h1>
+
+        {/* タブナビゲーション */}
+        <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_30px_rgba(74,144,226,0.2)] mb-8 border border-[#3a3a3a]">
+          <div className="flex border-b border-[#3a3a3a] overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('team1')}
+              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
+                activeTab === 'team1'
+                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
+                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
+              }`}
+              style={activeTab === 'team1' ? { 
+                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
+              } : {}}
+            >
+              1人チーム
+            </button>
+            <button
+              onClick={() => setActiveTab('team2')}
+              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
+                activeTab === 'team2'
+                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
+                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
+              }`}
+              style={activeTab === 'team2' ? { 
+                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
+              } : {}}
+            >
+              2人チーム
+            </button>
+            <button
+              onClick={() => setActiveTab('team3')}
+              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
+                activeTab === 'team3'
+                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
+                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
+              }`}
+              style={activeTab === 'team3' ? { 
+                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
+              } : {}}
+            >
+              3人チーム
+            </button>
+            <button
+              onClick={() => setActiveTab('team4')}
+              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
+                activeTab === 'team4'
+                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
+                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
+              }`}
+              style={activeTab === 'team4' ? { 
+                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
+              } : {}}
+            >
+              4人チーム
+            </button>
           </div>
-        ))}
+        </div>
+
+        {/* ランキング表示エリア */}
+        <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_40px_rgba(74,144,226,0.3)] overflow-hidden border border-[#3a3a3a]">
+          <div className="p-8">
+            {activeTab === 'team1' && (
+              <>
+                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
+                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
+                  1人チームランキング
+                </h2>
+                {renderTeamRankings(1)}
+              </>
+            )}
+            {activeTab === 'team2' && (
+              <>
+                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
+                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
+                  2人チームランキング
+                </h2>
+                {renderTeamRankings(2)}
+              </>
+            )}
+            {activeTab === 'team3' && (
+              <>
+                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
+                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
+                  3人チームランキング
+                </h2>
+                {renderTeamRankings(3)}
+              </>
+            )}
+            {activeTab === 'team4' && (
+              <>
+                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
+                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
+                  4人チームランキング
+                </h2>
+                {renderTeamRankings(4)}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 統計情報 */}
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_25px_rgba(74,144,226,0.2)] p-8 border border-[#3a3a3a] hover:shadow-[0_0_35px_rgba(74,144,226,0.4)] transition-all duration-300">
+            <h3 className="text-sm font-semibold text-[#999] mb-3 uppercase tracking-wider">Team Scores</h3>
+            <p className="text-5xl font-bold text-[#4a90e2]" 
+               style={{ textShadow: '0 0 20px rgba(74, 144, 226, 0.6)' }}>
+              {teamScores.length}
+            </p>
+          </div>
+          <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_25px_rgba(74,144,226,0.2)] p-8 border border-[#3a3a3a] hover:shadow-[0_0_35px_rgba(74,144,226,0.4)] transition-all duration-300">
+            <h3 className="text-sm font-semibold text-[#999] mb-3 uppercase tracking-wider">Player Scores</h3>
+            <p className="text-5xl font-bold text-[#4a90e2]"
+               style={{ textShadow: '0 0 20px rgba(74, 144, 226, 0.6)' }}>
+              {playerScores.length}
+            </p>
+          </div>
+        </div>
       </div>
-
-      <style jsx>{`
-        .ranking-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #0a1628 0%, #1e3c72 50%, #2a5298 100%);
-          padding: 20px;
-          font-family: 'BestTenDot-Regular', monospace;
-          position: relative;
-          overflow-x: hidden;
-        }
-
-        .ranking-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: 
-            radial-gradient(circle at 20% 30%, rgba(100, 200, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(255, 100, 200, 0.1) 0%, transparent 50%);
-          pointer-events: none;
-        }
-
-        .ranking-header {
-          text-align: center;
-          margin-bottom: 30px;
-          color: white;
-          position: relative;
-          z-index: 1;
-        }
-
-        .ranking-header h1 {
-          font-size: 2.5rem;
-          margin-bottom: 10px;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-          background: linear-gradient(45deg, #fff, #add8e6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .header-decoration {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-        }
-
-        .star {
-          font-size: 1.5rem;
-          animation: sparkle 2s infinite;
-        }
-
-        @keyframes sparkle {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.2); }
-        }
-
-        .ranking-list {
-          max-width: 800px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          position: relative;
-          z-index: 1;
-        }
-
-        .ranking-item {
-          background: linear-gradient(135deg, 
-            rgba(30, 60, 114, 0.8) 0%, 
-            rgba(42, 82, 152, 0.8) 50%, 
-            rgba(30, 60, 114, 0.8) 100%);
-          border: 2px solid rgba(100, 200, 255, 0.3);
-          border-radius: 15px;
-          padding: 20px;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          backdrop-filter: blur(15px);
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 
-            0 4px 20px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .ranking-item::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(45deg, 
-            rgba(255, 255, 255, 0.05) 0%, 
-            transparent 50%, 
-            rgba(255, 255, 255, 0.05) 100%);
-          pointer-events: none;
-        }
-
-        .ranking-item:hover {
-          transform: translateY(-5px);
-          box-shadow: 
-            0 10px 30px rgba(0, 0, 0, 0.4),
-            0 0 20px rgba(100, 200, 255, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-          border-color: rgba(100, 200, 255, 0.5);
-        }
-
-        .ranking-item.rank-top {
-          border-color: rgba(255, 215, 0, 0.6);
-          box-shadow: 
-            0 4px 25px rgba(0, 0, 0, 0.3),
-            0 0 25px rgba(255, 215, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .rank-badge {
-          min-width: 80px;
-          height: 50px;
-          border-radius: 25px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-          box-shadow: 
-            0 4px 12px rgba(0,0,0,0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .rank-number {
-          font-size: 1.2rem;
-        }
-
-        .player-info {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          flex: 1;
-        }
-
-        .rank-icon {
-          font-size: 2.5rem;
-          filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-        }
-
-        .player-details {
-          color: white;
-        }
-
-        .player-name {
-          font-size: 1.5rem;
-          font-weight: bold;
-          margin-bottom: 5px;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-          color: #e6f3ff;
-        }
-
-        .rank-title {
-          font-size: 0.9rem;
-          color: rgba(173, 216, 230, 0.9);
-          font-style: italic;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .score-display {
-          text-align: right;
-          color: white;
-        }
-
-        .total-score {
-          font-size: 1.8rem;
-          font-weight: bold;
-          background: linear-gradient(45deg, #FFD700, #FFA500, #FF8C00);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-          filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-        }
-
-        .loading, .error {
-          text-align: center;
-          color: white;
-          font-size: 1.2rem;
-          margin-top: 50px;
-          position: relative;
-          z-index: 1;
-        }
-
-        .error {
-          color: #ff6b6b;
-        }
-
-        @media (max-width: 768px) {
-          .ranking-item {
-            flex-direction: column;
-            text-align: center;
-            gap: 15px;
-          }
-
-          .player-info {
-            flex-direction: column;
-            gap: 10px;
-          }
-
-          .ranking-header h1 {
-            font-size: 2rem;
-          }
-
-          .player-name {
-            font-size: 1.3rem;
-          }
-
-          .total-score {
-            font-size: 1.5rem;
-          }
-        }
-      `}</style>
     </div>
+  );
+}
+
+export default function RankingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#4a90e2] border-t-transparent"></div>
+          <p className="mt-6 text-[#e0e0e0] text-lg font-semibold tracking-wider">LOADING...</p>
+        </div>
+      </div>
+    }>
+      <RankingContent />
+    </Suspense>
   );
 }

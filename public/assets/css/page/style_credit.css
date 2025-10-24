@@ -1,0 +1,115 @@
+/* ===== クレジットページ ===== */
+.credit-section {
+  margin: 72px 0;
+}
+
+.credit-section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 32px 0;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.credit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.credit-item {
+  position: relative;
+  padding: 20px 24px 20px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(74, 144, 226, 0.25);
+  border-left: 2px solid #4a90e2;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%
+  );
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.credit-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  background: #4a90e2;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.credit-content {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.credit-title {
+  font-family: "Makinas", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+}
+
+.credit-author {
+  font-size: 12px;
+  margin: 0 0 10px 0;
+  color: #4a90e2;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.credit-description {
+  font-size: 13px;
+  margin: 0 0 12px 0;
+  color: #bbb;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.credit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #4a90e2;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 14px 8px 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-width: 0 0 1px 0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.credit-link::before {
+  content: "→";
+  font-size: 13px;
+  transition: transform 0.3s ease;
+}
+
+.credit-link:active {
+  color: #6bb0ff;
+}
+
+.credit-link:active::before {
+  transform: translateX(4px);
+}

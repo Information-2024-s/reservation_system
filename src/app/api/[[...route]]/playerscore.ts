@@ -6,8 +6,20 @@ import { z } from 'zod';
 
 const app = new OpenAPIHono();
 
-// 全てのルートに認証を適用
-app.use('*', authenticateCombined);
+// POST, PATCH, DELETE のみ認証を適用
+app.use('/', async (c, next) => {
+    if (c.req.method !== 'GET') {
+        return authenticateCombined(c, next);
+    }
+    return next();
+});
+
+app.use('/:id', async (c, next) => {
+    if (c.req.method !== 'GET') {
+        return authenticateCombined(c, next);
+    }
+    return next();
+});
 
 // プレイヤースコア一覧取得ルート
 const getPlayerScoresRoute = createRoute({
@@ -29,10 +41,6 @@ const getPlayerScoresRoute = createRoute({
 
 app.openapi(getPlayerScoresRoute, async (c) => {
     const playerScores = await prisma.playerScore.findMany({
-        include: {
-            player: true,
-            teamScore: true,
-        },
         orderBy: { createdAt: 'desc' },
     });
 
@@ -81,10 +89,6 @@ app.openapi(getPlayerScoreRoute, async (c) => {
 
     const playerScoreRecord = await prisma.playerScore.findUnique({
         where: { id },
-        include: {
-            player: true,
-            teamScore: true,
-        },
     });
 
     if (!playerScoreRecord) {

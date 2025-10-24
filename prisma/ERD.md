@@ -75,7 +75,7 @@ BOOKED BOOKED
     Int id "🗝️"
     Int score 
     Int player_id "❓"
-    Int team_score_id 
+    Int team_score_id "❓"
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -87,7 +87,7 @@ BOOKED BOOKED
     "Team" o{--}o "GameSession" : ""
     "Team" o{--}o "Player" : ""
     "Team" o{--}o "TeamScore" : ""
-    "Player" o|--|| "Team" : "team"
+    "Player" o|--|o "Team" : "team"
     "Player" o{--}o "PlayerScore" : ""
     "GameSession" o|--|| "Team" : "team"
     "GameSession" o{--}o "TeamScore" : ""
@@ -95,5 +95,5 @@ BOOKED BOOKED
     "TeamScore" o|--|| "GameSession" : "gameSession"
     "TeamScore" o|--|| "Team" : "team"
     "PlayerScore" o|--|o "Player" : "player"
-    "PlayerScore" o|--|| "TeamScore" : "teamScore"
+    "PlayerScore" o|--|o "TeamScore" : "teamScore"
 ```
