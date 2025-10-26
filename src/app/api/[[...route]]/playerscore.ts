@@ -27,12 +27,28 @@ const getPlayerScoresRoute = createRoute({
     method: 'get',
     tags: ['PlayerScores'],
     summary: 'プレイヤースコア一覧を取得',
+    request: {
+        query: z.object({
+            page: z.string().optional().default('1').openapi({ description: 'ページ番号（1から開始）' }),
+            limit: z.string().optional().default('10').openapi({ description: '1ページあたりの件数' }),
+            sortBy: z.enum(['id', 'score', 'createdAt']).optional().default('createdAt').openapi({ description: 'ソート項目' }),
+            sortOrder: z.enum(['asc', 'desc']).optional().default('desc').openapi({ description: 'ソート順' }),
+        }),
+    },
     responses: {
         200: {
             description: 'OK',
             content: {
                 'application/json': {
-                    schema: playerScore.array(),
+                    schema: z.object({
+                        data: playerScore.array(),
+                        pagination: z.object({
+                            page: z.number(),
+                            limit: z.number(),
+                            total: z.number(),
+                            totalPages: z.number(),
+                        }),
+                    }),
                 },
             },
         },
@@ -40,8 +56,24 @@ const getPlayerScoresRoute = createRoute({
 });
 
 app.openapi(getPlayerScoresRoute, async (c) => {
+    const { page, limit, sortBy, sortOrder } = c.req.valid('query');
+    
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // ソート条件を構築
+    const orderBy: any = {};
+    orderBy[sortBy] = sortOrder;
+
+    // 総件数を取得
+    const total = await prisma.playerScore.count();
+
+    // データを取得
     const playerScores = await prisma.playerScore.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy,
+        skip,
+        take: limitNum,
     });
 
     const formattedPlayerScores = playerScores.map((playerScore) => ({
@@ -50,7 +82,15 @@ app.openapi(getPlayerScoresRoute, async (c) => {
         updatedAt: playerScore.updatedAt.toISOString(),
     }));
 
-    return c.json(formattedPlayerScores);
+    return c.json({
+        data: formattedPlayerScores,
+        pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            totalPages: Math.ceil(total / limitNum),
+        },
+    });
 });
 
 // プレイヤースコア詳細取得ルート

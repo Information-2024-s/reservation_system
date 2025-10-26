@@ -63,7 +63,6 @@ model TeamScore {
   id              Int           @id @default(autoincrement())
   teamName        String
   headcount       Int
-  gameSessionName String
   description     String?
   score           Int
   createdAt       DateTime      @default(now())
@@ -71,7 +70,6 @@ model TeamScore {
   playerScores    PlayerScore[]
 
   @@index([teamName])
-  @@index([gameSessionName])
 }
 
 model PlayerScore {

@@ -27,12 +27,28 @@ const getTeamScoresRoute = createRoute({
     method: 'get',
     tags: ['TeamScores'],
     summary: 'チームスコア一覧を取得',
+    request: {
+        query: z.object({
+            page: z.string().optional().default('1').openapi({ description: 'ページ番号（1から開始）' }),
+            limit: z.string().optional().default('10').openapi({ description: '1ページあたりの件数' }),
+            sortBy: z.enum(['id', 'score', 'createdAt']).optional().default('createdAt').openapi({ description: 'ソート項目' }),
+            sortOrder: z.enum(['asc', 'desc']).optional().default('desc').openapi({ description: 'ソート順' }),
+        }),
+    },
     responses: {
         200: {
             description: 'OK',
             content: {
                 'application/json': {
-                    schema: teamScore.array(),
+                    schema: z.object({
+                        data: teamScore.array(),
+                        pagination: z.object({
+                            page: z.number(),
+                            limit: z.number(),
+                            total: z.number(),
+                            totalPages: z.number(),
+                        }),
+                    }),
                 },
             },
         },
@@ -40,20 +56,49 @@ const getTeamScoresRoute = createRoute({
 });
 
 app.openapi(getTeamScoresRoute, async (c) => {
+    const { page, limit, sortBy, sortOrder } = c.req.valid('query');
+    
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // ソート条件を構築
+    const orderBy: any = {};
+    orderBy[sortBy] = sortOrder;
+
+    // 総件数を取得
+    const total = await prisma.teamScore.count();
+
+    // データを取得
     const teamScores = await prisma.teamScore.findMany({
         include: {
             playerScores: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
+        skip,
+        take: limitNum,
     });
 
     const formattedTeamScores = teamScores.map((teamScore) => ({
         ...teamScore,
         createdAt: teamScore.createdAt.toISOString(),
         updatedAt: teamScore.updatedAt.toISOString(),
+        playerScores: teamScore.playerScores?.map((ps) => ({
+            ...ps,
+            createdAt: ps.createdAt.toISOString(),
+            updatedAt: ps.updatedAt.toISOString(),
+        })),
     }));
 
-    return c.json(formattedTeamScores);
+    return c.json({
+        data: formattedTeamScores,
+        pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            totalPages: Math.ceil(total / limitNum),
+        },
+    });
 });
 
 // チームスコア詳細取得ルート

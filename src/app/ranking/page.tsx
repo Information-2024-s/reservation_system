@@ -2,6 +2,8 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import TerminalBackground from './TerminalBackground';
+import './terminal-bg.css';
 
 interface PlayerScoreData {
   id: number;
@@ -16,7 +18,6 @@ interface TeamScoreData {
   id: number;
   teamName: string;
   headcount: number;
-  gameSessionName: string;
   description: string | null;
   score: number;
   createdAt: string;
@@ -28,7 +29,6 @@ interface TeamRanking {
   headcount: number;
   totalScore: number;
   count: number;
-  gameSessionName: string;
 }
 
 function RankingContent() {
@@ -110,7 +110,7 @@ function RankingContent() {
     teamScores
       .filter(score => score.headcount === headcount)
       .forEach(score => {
-        const key = `${score.teamName}_${score.gameSessionName}`;
+        const key = score.teamName;
         const existing = teamMap.get(key);
         if (existing) {
           existing.totalScore += score.score;
@@ -119,7 +119,6 @@ function RankingContent() {
           teamMap.set(key, {
             teamName: score.teamName,
             headcount: score.headcount,
-            gameSessionName: score.gameSessionName,
             totalScore: score.score,
             count: 1
           });
@@ -136,49 +135,86 @@ function RankingContent() {
     if (rankings.length === 0) {
       return (
         <div className="text-center py-12">
-          <p className="text-[#666] text-lg tracking-wider">NO DATA AVAILABLE</p>
+          <p className="text-[#9aa3a6] text-lg tracking-wider">NO DATA AVAILABLE</p>
         </div>
       );
     }
 
     return (
       <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-[#1a1a1a] border-b-2 border-[#4a90e2]" style={{ boxShadow: '0 2px 15px rgba(74, 144, 226, 0.3)' }}>
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-bold text-[#4a90e2] uppercase tracking-wider">順位</th>
-              <th className="px-6 py-4 text-left text-sm font-bold text-[#4a90e2] uppercase tracking-wider">チーム名</th>
-              <th className="px-6 py-4 text-right text-sm font-bold text-[#4a90e2] uppercase tracking-wider">スコア</th>
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+          <thead>
+            <tr 
+              className="bg-[rgba(74,144,226,0.1)] border-b border-[rgba(74,144,226,0.2)]"
+            >
+              <th 
+                className="px-5 py-3 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                style={{ 
+                  fontFamily: 'system-ui, sans-serif',
+                  letterSpacing: '0.05em',
+                  width: '80px',
+                }}
+              >
+                順位
+              </th>
+              <th 
+                className="px-5 py-3 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                style={{ 
+                  fontFamily: 'system-ui, sans-serif',
+                  letterSpacing: '0.05em',
+                  width: 'auto',
+                }}
+              >
+                チーム名
+              </th>
+              <th 
+                className="px-5 py-3 text-right font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                style={{ 
+                  fontFamily: 'system-ui, sans-serif',
+                  letterSpacing: '0.05em',
+                  width: '120px',
+                }}
+              >
+                スコア
+              </th>
             </tr>
           </thead>
           <tbody>
             {rankings.map((ranking, index) => (
               <tr 
-                key={`${ranking.teamName}_${ranking.gameSessionName}`} 
-                className={`border-b border-[#3a3a3a] transition-all duration-300 ${
-                  index % 2 === 0 ? 'bg-[#2a2a2a]' : 'bg-[#222]'
-                } hover:bg-[#333] hover:shadow-[0_0_15px_rgba(74,144,226,0.2)]`}
+                key={`${ranking.teamName}_${index}`} 
+                className={`border-b border-[rgba(74,144,226,0.1)] transition-all duration-300 ${
+                  index % 2 === 0 ? 'bg-[rgba(255,255,255,0.02)]' : 'bg-[rgba(255,255,255,0.01)]'
+                } hover:bg-[rgba(74,144,226,0.05)]`}
               >
-                <td className="px-6 py-5">
-                  <span className={`font-bold text-lg ${
-                    index === 0 ? 'text-[#FFD700]' :
-                    index === 1 ? 'text-[#C0C0C0]' :
-                    index === 2 ? 'text-[#CD7F32]' :
-                    'text-[#e0e0e0]'
-                  }`} style={
-                    index < 3 ? { textShadow: `0 0 10px ${
-                      index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : '#CD7F32'
-                    }` } : {}
-                  }>
-                    {index + 1}
-                    {index === 0 && ' 🥇'}
-                    {index === 1 && ' 🥈'}
-                    {index === 2 && ' 🥉'}
-                  </span>
+                <td className="px-5 py-4 align-middle">
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className={`w-10 h-10 rounded-lg grid place-items-center text-sm font-semibold tracking-wider uppercase transition-all duration-250 ${
+                        index === 0 ? 'bg-gradient-to-b from-[rgba(60,50,20,0.85)] to-[rgba(25,20,5,0.95)] text-[#fff7d1] border-[rgba(255,230,150,0.45)]' :
+                        index === 1 ? 'bg-gradient-to-b from-[rgba(35,40,55,0.85)] to-[rgba(15,18,25,0.95)] text-[#eef1ff] border-[rgba(190,210,255,0.45)]' :
+                        index === 2 ? 'bg-gradient-to-b from-[rgba(45,25,20,0.85)] to-[rgba(25,10,5,0.95)] text-[#ffe0c0] border-[rgba(255,180,120,0.4)]' :
+                        'bg-[rgba(10,15,25,0.7)] text-[#eaf2ff] border-[rgba(120,220,255,0.25)]'
+                      } border-[1.5px]`}
+                      style={{
+                        backdropFilter: 'blur(14px) saturate(200%)',
+                        WebkitBackdropFilter: 'blur(14px) saturate(200%)',
+                        boxShadow: index === 0 ? 'inset 0 0 14px rgba(255, 220, 120, 0.25), 0 0 18px rgba(255, 200, 90, 0.4), 0 0 6px rgba(255, 255, 180, 0.3)' :
+                                   index === 1 ? 'inset 0 0 14px rgba(190, 210, 255, 0.25), 0 0 18px rgba(150, 170, 255, 0.35), 0 0 6px rgba(220, 230, 255, 0.25)' :
+                                   index === 2 ? 'inset 0 0 14px rgba(255, 150, 100, 0.25), 0 0 18px rgba(255, 130, 70, 0.4), 0 0 6px rgba(255, 200, 160, 0.25)' : '',
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+                  </div>
                 </td>
-                <td className="px-6 py-5 font-bold text-[#e0e0e0] tracking-wide">{ranking.teamName}</td>
-                <td className="px-6 py-5 text-right font-bold text-[#4a90e2] text-lg" 
-                    style={{ textShadow: '0 0 10px rgba(74, 144, 226, 0.5)' }}>
+                <td className="px-5 py-4 font-semibold text-white align-middle">
+                  {ranking.teamName}
+                </td>
+                <td 
+                  className="px-5 py-4 text-right font-bold text-white text-base align-middle"
+                  style={{ textShadow: '0 0 8px rgba(74, 144, 226, 0.3)' }}
+                >
                   {ranking.totalScore.toLocaleString()}
                 </td>
               </tr>
@@ -191,10 +227,22 @@ function RankingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#4a90e2] border-t-transparent"></div>
-          <p className="mt-6 text-[#e0e0e0] text-lg font-semibold tracking-wider">LOADING...</p>
+      <div className="ranking-page min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] relative">
+        <TerminalBackground />
+        <div className="text-center relative z-10">
+          <div 
+            className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-transparent"
+            style={{
+              borderTopColor: '#4a90e2',
+              borderRightColor: '#4a90e2',
+            }}
+          />
+          <p 
+            className="mt-6 text-[#e0f0ff] text-lg font-semibold tracking-wider uppercase"
+            style={{ letterSpacing: '0.08em' }}
+          >
+            LOADING...
+          </p>
         </div>
       </div>
     );
@@ -202,144 +250,214 @@ function RankingContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
-        <div className="bg-[#2a2a2a] border-2 border-red-500 rounded-lg p-8 max-w-md shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-          <h2 className="text-red-400 font-bold text-xl mb-3 tracking-wide">ERROR</h2>
-          <p className="text-[#e0e0e0]">{error}</p>
+      <div className="ranking-page min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] relative">
+        <TerminalBackground />
+        <div 
+          className="p-8 max-w-md relative z-10"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(239, 68, 68, 0.5)',
+            borderLeft: '2px solid #ef4444',
+            clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%)',
+            boxShadow: '0 8px 32px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          <div 
+            className="absolute bottom-0 right-0 w-[7px] h-[7px]"
+            style={{
+              background: '#ef4444',
+              clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+            }}
+          />
+          <h2 
+            className="text-red-400 font-bold text-xl mb-3 tracking-wide uppercase"
+            style={{ letterSpacing: '0.08em' }}
+          >
+            ERROR
+          </h2>
+          <p className="text-[#e0f0ff]">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#181818] py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="ranking-page min-h-screen bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] py-12 px-6 flex justify-center relative">
+      <TerminalBackground />
+      <div className="ranking-content w-full max-w-[1100px]">
         {/* タイトル */}
-        <h1 className="text-5xl md:text-6xl font-bold text-[#e0e0e0] mb-12 text-center tracking-wider"
+        <header className="text-center mb-6">
+          <h1 
+            className="text-5xl md:text-6xl font-extrabold text-[#e0f0ff] uppercase tracking-wider"
             style={{ 
               fontFamily: 'system-ui, sans-serif',
-              textShadow: '0 0 20px rgba(74, 144, 226, 0.5), 0 0 40px rgba(74, 144, 226, 0.3)' 
+              textShadow: '0 0 4px rgba(224, 240, 255, 0.6), 0 0 8px rgba(224, 240, 255, 0.5), 0 0 12px rgba(74, 144, 226, 0.5), 0 0 18px rgba(74, 144, 226, 0.4), 0 0 24px rgba(74, 144, 226, 0.3)',
+              lineHeight: 1.2,
             }}>
-          🏆 RANKING
-        </h1>
+            RANKING
+          </h1>
+        </header>
 
         {/* タブナビゲーション */}
-        <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_30px_rgba(74,144,226,0.2)] mb-8 border border-[#3a3a3a]">
-          <div className="flex border-b border-[#3a3a3a] overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('team1')}
-              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
-                activeTab === 'team1'
-                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
-                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
-              }`}
-              style={activeTab === 'team1' ? { 
-                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
-              } : {}}
-            >
-              1人チーム
-            </button>
-            <button
-              onClick={() => setActiveTab('team2')}
-              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
-                activeTab === 'team2'
-                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
-                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
-              }`}
-              style={activeTab === 'team2' ? { 
-                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
-              } : {}}
-            >
-              2人チーム
-            </button>
-            <button
-              onClick={() => setActiveTab('team3')}
-              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
-                activeTab === 'team3'
-                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
-                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
-              }`}
-              style={activeTab === 'team3' ? { 
-                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
-              } : {}}
-            >
-              3人チーム
-            </button>
-            <button
-              onClick={() => setActiveTab('team4')}
-              className={`px-8 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 tracking-wider ${
-                activeTab === 'team4'
-                  ? 'border-b-3 border-[#4a90e2] text-[#4a90e2] bg-[#1a1a1a] shadow-[0_0_20px_rgba(74,144,226,0.4)]'
-                  : 'text-[#999] hover:text-[#e0e0e0] hover:bg-[#333]'
-              }`}
-              style={activeTab === 'team4' ? { 
-                textShadow: '0 0 10px rgba(74, 144, 226, 0.8)' 
-              } : {}}
-            >
-              4人チーム
-            </button>
-          </div>
-        </div>
+        <nav className="flex justify-around mb-8" role="tablist" aria-label="チームタイプ切替">
+          <button
+            onClick={() => setActiveTab('team1')}
+            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+              activeTab === 'team1' ? 'text-white' : 'text-white/70 hover:text-white'
+            }`}
+            style={activeTab === 'team1' ? {
+              borderBottom: '2px solid #4a90e2',
+            } : {}}
+          >
+            1人チーム
+          </button>
+          <button
+            onClick={() => setActiveTab('team2')}
+            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+              activeTab === 'team2' ? 'text-white' : 'text-white/70 hover:text-white'
+            }`}
+            style={activeTab === 'team2' ? {
+              borderBottom: '2px solid #4a90e2',
+            } : {}}
+          >
+            2人チーム
+          </button>
+          <button
+            onClick={() => setActiveTab('team3')}
+            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+              activeTab === 'team3' ? 'text-white' : 'text-white/70 hover:text-white'
+            }`}
+            style={activeTab === 'team3' ? {
+              borderBottom: '2px solid #4a90e2',
+            } : {}}
+          >
+            3人チーム
+          </button>
+          <button
+            onClick={() => setActiveTab('team4')}
+            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+              activeTab === 'team4' ? 'text-white' : 'text-white/70 hover:text-white'
+            }`}
+            style={activeTab === 'team4' ? {
+              borderBottom: '2px solid #4a90e2',
+            } : {}}
+          >
+            4人チーム
+          </button>
+        </nav>
 
         {/* ランキング表示エリア */}
-        <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_40px_rgba(74,144,226,0.3)] overflow-hidden border border-[#3a3a3a]">
-          <div className="p-8">
-            {activeTab === 'team1' && (
-              <>
-                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
-                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
-                  1人チームランキング
-                </h2>
-                {renderTeamRankings(1)}
-              </>
-            )}
-            {activeTab === 'team2' && (
-              <>
-                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
-                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
-                  2人チームランキング
-                </h2>
-                {renderTeamRankings(2)}
-              </>
-            )}
-            {activeTab === 'team3' && (
-              <>
-                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
-                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
-                  3人チームランキング
-                </h2>
-                {renderTeamRankings(3)}
-              </>
-            )}
-            {activeTab === 'team4' && (
-              <>
-                <h2 className="text-3xl font-bold text-[#e0e0e0] mb-8 tracking-wider"
-                    style={{ textShadow: '0 0 15px rgba(74, 144, 226, 0.5)' }}>
-                  4人チームランキング
-                </h2>
-                {renderTeamRankings(4)}
-              </>
-            )}
-          </div>
-        </div>
+        <main 
+          className="p-7 relative"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(74, 144, 226, 0.25)',
+            borderLeft: '2px solid #4a90e2',
+            clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          {/* 右下の三角形 */}
+          <div 
+            className="absolute bottom-0 right-0 w-[7px] h-[7px]"
+            style={{
+              background: '#4a90e2',
+              clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+            }}
+          />
+          
+          <h2 
+            className="text-xl font-semibold text-white mb-5 tracking-wider uppercase"
+            id="panel-title"
+            style={{
+              fontFamily: 'system-ui, sans-serif',
+              letterSpacing: '0.08em',
+              textShadow: '0 0 10px rgba(74, 144, 226, 0.3)',
+            }}
+          >
+            {activeTab === 'team1' && '1人チームランキング'}
+            {activeTab === 'team2' && '2人チームランキング'}
+            {activeTab === 'team3' && '3人チームランキング'}
+            {activeTab === 'team4' && '4人チームランキング'}
+          </h2>
 
-        {/* 統計情報 */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_25px_rgba(74,144,226,0.2)] p-8 border border-[#3a3a3a] hover:shadow-[0_0_35px_rgba(74,144,226,0.4)] transition-all duration-300">
-            <h3 className="text-sm font-semibold text-[#999] mb-3 uppercase tracking-wider">Team Scores</h3>
-            <p className="text-5xl font-bold text-[#4a90e2]" 
-               style={{ textShadow: '0 0 20px rgba(74, 144, 226, 0.6)' }}>
-              {teamScores.length}
-            </p>
+          {/* テーブル表示 */}
+          {activeTab === 'team1' && renderTeamRankings(1)}
+          {activeTab === 'team2' && renderTeamRankings(2)}
+          {activeTab === 'team3' && renderTeamRankings(3)}
+          {activeTab === 'team4' && renderTeamRankings(4)}
+
+          {/* 統計情報 */}
+          <div className="grid grid-cols-2 gap-5 mt-7">
+            <div 
+              className="p-6 flex flex-col items-start justify-between h-[120px] relative"
+              style={{
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(74, 144, 226, 0.25)',
+                borderLeft: '2px solid #4a90e2',
+                clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <div 
+                className="absolute bottom-0 right-0 w-[7px] h-[7px]"
+                style={{
+                  background: '#4a90e2',
+                  clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+                }}
+              />
+              <div 
+                className="text-xs font-bold text-[#4a90e2] uppercase tracking-wider"
+                style={{ letterSpacing: '0.05em' }}
+              >
+                TEAM SCORES
+              </div>
+              <div 
+                className="text-5xl font-extrabold text-white leading-none"
+                style={{ textShadow: '0 0 10px rgba(74, 144, 226, 0.3)' }}
+              >
+                {teamScores.length}
+              </div>
+            </div>
+
+            <div 
+              className="p-6 flex flex-col items-start justify-between h-[120px] relative"
+              style={{
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(74, 144, 226, 0.25)',
+                borderLeft: '2px solid #4a90e2',
+                clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <div 
+                className="absolute bottom-0 right-0 w-[7px] h-[7px]"
+                style={{
+                  background: '#4a90e2',
+                  clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+                }}
+              />
+              <div 
+                className="text-xs font-bold text-[#4a90e2] uppercase tracking-wider"
+                style={{ letterSpacing: '0.05em' }}
+              >
+                PLAYER SCORES
+              </div>
+              <div 
+                className="text-5xl font-extrabold text-white leading-none"
+                style={{ textShadow: '0 0 10px rgba(74, 144, 226, 0.3)' }}
+              >
+                {playerScores.length}
+              </div>
+            </div>
           </div>
-          <div className="bg-[#2a2a2a] rounded-lg shadow-[0_0_25px_rgba(74,144,226,0.2)] p-8 border border-[#3a3a3a] hover:shadow-[0_0_35px_rgba(74,144,226,0.4)] transition-all duration-300">
-            <h3 className="text-sm font-semibold text-[#999] mb-3 uppercase tracking-wider">Player Scores</h3>
-            <p className="text-5xl font-bold text-[#4a90e2]"
-               style={{ textShadow: '0 0 20px rgba(74, 144, 226, 0.6)' }}>
-              {playerScores.length}
-            </p>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   );
@@ -348,10 +466,22 @@ function RankingContent() {
 export default function RankingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#181818]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#4a90e2] border-t-transparent"></div>
-          <p className="mt-6 text-[#e0e0e0] text-lg font-semibold tracking-wider">LOADING...</p>
+      <div className="ranking-page min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] relative">
+        <TerminalBackground />
+        <div className="text-center relative z-10">
+          <div 
+            className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-transparent"
+            style={{
+              borderTopColor: '#4a90e2',
+              borderRightColor: '#4a90e2',
+            }}
+          />
+          <p 
+            className="mt-6 text-[#e0f0ff] text-lg font-semibold tracking-wider uppercase"
+            style={{ letterSpacing: '0.08em' }}
+          >
+            LOADING...
+          </p>
         </div>
       </div>
     }>

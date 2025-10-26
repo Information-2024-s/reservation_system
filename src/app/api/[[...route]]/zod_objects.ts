@@ -180,9 +180,6 @@ export const teamScore = z.object({
     .int()
     .positive()
     .openapi({ example: 4, description: "人数" }),
-  gameSessionName: z
-    .string()
-    .openapi({ example: "ゲームセッション1", description: "ゲームセッション名" }),
   description: z
     .string()
     .nullable()
@@ -206,9 +203,6 @@ export const createTeamScore = z.object({
     .int()
     .positive()
     .openapi({ example: 4, description: "人数" }),
-  gameSessionName: z
-    .string()
-    .openapi({ example: "ゲームセッション1", description: "ゲームセッション名" }),
   description: z
     .string()
     .nullable()
@@ -228,10 +222,6 @@ export const updateTeamScore = z.object({
     .positive()
     .optional()
     .openapi({ example: 5, description: "人数" }),
-  gameSessionName: z
-    .string()
-    .optional()
-    .openapi({ example: "ゲームセッション2", description: "ゲームセッション名" }),
   description: z
     .string()
     .nullable()
