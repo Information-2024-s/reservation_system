@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 /**
  * スタッフ用：全予約を取得
@@ -58,40 +59,12 @@ export async function getAllReservations() {
  */
 export async function deleteReservationById(id: number) {
   try {
-    // 予約の存在確認
-    const existingReservation = await prisma.reservation.findUnique({
+    await prisma.reservation.delete({
       where: { id },
-      include: { timeSlot: true },
     });
 
-    if (!existingReservation) {
-      throw new Error("予約が見つかりません");
-    }
-
-    // 過去の予約は削除不可
-    const now = new Date();
-    const reservationTime =
-      existingReservation.timeSlot?.slotTime || existingReservation.startTime;
-
-    if (reservationTime < now) {
-      throw new Error("過去の予約は削除できません");
-    }
-
-    // トランザクションで削除
-    await prisma.$transaction(async (tx) => {
-      // タイムスロットのステータスを AVAILABLE に戻す
-      if (existingReservation.timeSlot) {
-        await tx.timeSlot.update({
-          where: { id: existingReservation.timeSlot.id },
-          data: { status: "AVAILABLE" },
-        });
-      }
-
-      // 予約を削除
-      await tx.reservation.delete({
-        where: { id },
-      });
-    });
+    // キャッシュを明示的に再検証
+    revalidatePath("/staff");
 
     return { success: true };
   } catch (error) {
@@ -105,6 +78,20 @@ export async function deleteReservationById(id: number) {
  */
 export async function markReservationAsCalled(id: number) {
   try {
+    console.log(`=== markReservationAsCalled: 開始 ID=${id} ===`);
+    
+    // 予約の存在確認
+    const existingReservation = await prisma.reservation.findUnique({
+      where: { id },
+    });
+
+    if (!existingReservation) {
+      console.error(`予約が見つかりません: ID=${id}`);
+      throw new Error("予約が見つかりません");
+    }
+
+    console.log(`既存の予約:`, existingReservation);
+
     const updatedReservation = await prisma.reservation.update({
       where: { id },
       data: {
@@ -113,9 +100,17 @@ export async function markReservationAsCalled(id: number) {
       },
     });
 
+    console.log(`予約を更新しました: ID=${id}`, updatedReservation);
+    
+    // キャッシュを明示的に再検証
+    revalidatePath("/staff");
+    
     return { success: true, reservation: updatedReservation };
   } catch (error) {
+    console.error("=== markReservationAsCalled: エラー ===");
     console.error("Failed to mark reservation as called:", error);
+    console.error("Error details:", error instanceof Error ? error.message : String(error));
+    console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
     throw error instanceof Error ? error : new Error("予約の更新に失敗しました");
   }
 }
@@ -129,9 +124,11 @@ export async function markReservationAsNoShow(id: number) {
       where: { id },
       data: {
         callStatus: "NO_SHOW",
-        calledAt: new Date(),
       },
     });
+
+    // キャッシュを明示的に再検証
+    revalidatePath("/staff");
 
     return { success: true, reservation: updatedReservation };
   } catch (error) {
@@ -152,6 +149,9 @@ export async function resetCallStatus(id: number) {
         calledAt: null,
       },
     });
+
+    // キャッシュを明示的に再検証
+    revalidatePath("/staff");
 
     return { success: true, reservation: updatedReservation };
   } catch (error) {

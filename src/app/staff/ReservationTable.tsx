@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { 
@@ -42,6 +42,9 @@ export default function ReservationTable({ initialReservations }: Props) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  // 現在時刻を固定（ハイドレーションエラー回避）
+  const now = useMemo(() => new Date(), []);
+
   const handleDeleteReservation = async (id: number) => {
     if (!confirm("この予約を削除してもよろしいですか？")) {
       return;
@@ -62,13 +65,16 @@ export default function ReservationTable({ initialReservations }: Props) {
 
   const handleMarkAsCalled = async (id: number) => {
     try {
+      console.log(`呼ぶボタンクリック: ID=${id}`);
       await markReservationAsCalled(id);
+      console.log(`呼び出し成功: ID=${id}`);
       
       // ページをリフレッシュ
       startTransition(() => {
         router.refresh();
       });
     } catch (err) {
+      console.error(`呼び出しエラー: ID=${id}`, err);
       alert(err instanceof Error ? err.message : "更新に失敗しました");
     }
   };
@@ -104,7 +110,6 @@ export default function ReservationTable({ initialReservations }: Props) {
   };
 
   const filteredReservations = initialReservations.filter((reservation) => {
-    const now = new Date();
     const reservationTime = new Date(reservation.timeSlot?.slotTime || reservation.startTime);
 
     if (filterStatus === "upcoming") {
@@ -218,7 +223,7 @@ export default function ReservationTable({ initialReservations }: Props) {
                 const reservationTime = new Date(
                   reservation.timeSlot?.slotTime || reservation.startTime
                 );
-                const isPast = reservationTime < new Date();
+                const isPast = reservationTime < now;
 
                 return (
                   <tr key={reservation.id} className={isPast ? "bg-gray-50" : ""}>
