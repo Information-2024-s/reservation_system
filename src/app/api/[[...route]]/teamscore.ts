@@ -33,6 +33,7 @@ const getTeamScoresRoute = createRoute({
             limit: z.string().optional().default('10').openapi({ description: '1ページあたりの件数' }),
             sortBy: z.enum(['id', 'score', 'createdAt']).optional().default('createdAt').openapi({ description: 'ソート項目' }),
             sortOrder: z.enum(['asc', 'desc']).optional().default('desc').openapi({ description: 'ソート順' }),
+            headcount: z.string().optional().openapi({ description: 'フィルター: 人数' }),
         }),
     },
     responses: {
@@ -56,21 +57,28 @@ const getTeamScoresRoute = createRoute({
 });
 
 app.openapi(getTeamScoresRoute, async (c) => {
-    const { page, limit, sortBy, sortOrder } = c.req.valid('query');
+    const { page, limit, sortBy, sortOrder, headcount } = c.req.valid('query');
     
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
+
+    // フィルター条件を構築
+    const where: any = {};
+    if (headcount) {
+        where.headcount = parseInt(headcount);
+    }
 
     // ソート条件を構築
     const orderBy: Partial<Record<'id' | 'score' | 'createdAt', 'asc' | 'desc'>> = {};
     orderBy[sortBy] = sortOrder;
 
     // 総件数を取得
-    const total = await prisma.teamScore.count();
+    const total = await prisma.teamScore.count({ where });
 
     // データを取得
     const teamScores = await prisma.teamScore.findMany({
+        where,
         include: {
             playerScores: true,
         },

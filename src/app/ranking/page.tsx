@@ -34,14 +34,18 @@ interface TeamRanking {
 function RankingContent() {
   const searchParams = useSearchParams();
   const [playerScores, setPlayerScores] = useState<PlayerScoreData[]>([]);
-  const [teamScores, setTeamScores] = useState<TeamScoreData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [team1Scores, setTeam1Scores] = useState<TeamScoreData[]>([]);
+  const [team2Scores, setTeam2Scores] = useState<TeamScoreData[]>([]);
+  const [team3Scores, setTeam3Scores] = useState<TeamScoreData[]>([]);
+  const [team4Scores, setTeam4Scores] = useState<TeamScoreData[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'team1' | 'team2' | 'team3' | 'team4'>('team1');
 
   // クエリパラメータから設定を取得
   const autoSwitch = searchParams.get('auto') === 'true'; // デフォルトfalse
   const intervalSeconds = parseInt(searchParams.get('interval') || '10', 10); // デフォルト10秒
+  const refreshInterval = parseInt(searchParams.get('refresh') || '30', 10); // データ再取得間隔(秒)、デフォルト30秒
 
   // 自動タブ切り替え
   useEffect(() => {
@@ -61,69 +65,133 @@ function RankingContent() {
     return () => clearInterval(interval);
   }, [autoSwitch, intervalSeconds]);
 
+  // 特定のタブのデータを取得する関数
+  const fetchTabData = async (tab: 'team1' | 'team2' | 'team3' | 'team4') => {
+    try {
+      setLoading(true);
+      console.log(`Fetching data for tab: ${tab}`);
+
+      const headcount = parseInt(tab.replace('team', ''));
+      // キャッシュを無効化するため、タイムスタンプをクエリパラメータに追加
+      const response = await fetch(
+        `/api/teamscores?headcount=${headcount}&limit=100&sortBy=score&sortOrder=desc&_t=${Date.now()}`,
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) {
+        throw new Error(`${headcount}人チームのスコア取得に失敗しました`);
+      }
+
+      const data = await response.json();
+      const teamArray = data.data || data;
+
+      console.log(`Team ${headcount} Scores length:`, teamArray.length);
+
+      // 適切なステートにセット
+      switch (tab) {
+        case 'team1':
+          setTeam1Scores(teamArray);
+          break;
+        case 'team2':
+          setTeam2Scores(teamArray);
+          break;
+        case 'team3':
+          setTeam3Scores(teamArray);
+          break;
+        case 'team4':
+          setTeam4Scores(teamArray);
+          break;
+      }
+
+      console.log(`Tab ${tab} loaded successfully`);
+    } catch (err) {
+      console.error(`Error fetching ${tab} data:`, err);
+      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 初回マウント時とactiveTabが変更されたときにデータを取得
   useEffect(() => {
-    const fetchScores = async () => {
+    fetchTabData(activeTab);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 定期的にデータを再取得(ディスプレイ常時表示用)
+  useEffect(() => {
+    const REFRESH_INTERVAL = refreshInterval * 1000; // 秒をミリ秒に変換
+
+    const interval = setInterval(() => {
+      console.log(`Auto-refreshing data for active tab: ${activeTab}`);
+      fetchTabData(activeTab);
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [activeTab, refreshInterval]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // プレイヤースコアも定期的に更新（全タブで共通）
+  useEffect(() => {
+    const fetchPlayerScores = async () => {
       try {
-        setLoading(true);
-        console.log('Starting fetch...');
-        
-        // PlayerScoreとTeamScoreを並列取得
-        const [playerRes, teamRes] = await Promise.all([
-          fetch('/api/playerscores'),
-          fetch('/api/teamscores')
-        ]);
+        console.log('Fetching player scores...');
 
-        console.log('playerRes.ok:', playerRes.ok, 'teamRes.ok:', teamRes.ok);
-
-        if (!playerRes.ok || !teamRes.ok) {
-          throw new Error('スコアの取得に失敗しました');
+        // キャッシュを無効化
+        const response = await fetch(`/api/playerscores?limit=1000&_t=${Date.now()}`, {
+          cache: 'no-store'
+        });
+        if (!response.ok) {
+          throw new Error('プレイヤースコアの取得に失敗しました');
         }
 
-        const playerData = await playerRes.json();
-        const teamData = await teamRes.json();
+        const data = await response.json();
+        const playerArray = data.data || data;
 
-        console.log('Fetched Player Scores:', playerData);
-        console.log('Fetched Team Scores:', teamData);
-        console.log('Player Scores length:', playerData.length);
-        console.log('Team Scores length:', teamData.length);
-
-        setPlayerScores(playerData);
-        setTeamScores(teamData);
-        
-        console.log('State updated, loading will be set to false');
+        console.log('Player Scores length:', playerArray.length);
+        setPlayerScores(playerArray);
       } catch (err) {
-        console.error('Error fetching scores:', err);
+        console.error('Error fetching player scores:', err);
         setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
-      } finally {
-        setLoading(false);
-        console.log('Loading set to false');
       }
     };
 
-    fetchScores();
-  }, []);
+    // 初回取得
+    fetchPlayerScores();
+
+    // 定期的に更新
+    const REFRESH_INTERVAL = refreshInterval * 1000;
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing player scores');
+      fetchPlayerScores();
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval]);
 
   // チーム人数別にスコアを集計してランキング作成
   const getTeamRankings = (headcount: number): TeamRanking[] => {
     const teamMap = new Map<string, TeamRanking>();
 
-    teamScores
-      .filter(score => score.headcount === headcount)
-      .forEach(score => {
-        const key = score.teamName;
-        const existing = teamMap.get(key);
-        if (existing) {
-          existing.totalScore += score.score;
-          existing.count += 1;
-        } else {
-          teamMap.set(key, {
-            teamName: score.teamName,
-            headcount: score.headcount,
-            totalScore: score.score,
-            count: 1
-          });
-        }
-      });
+    // 人数に応じて適切なステートを選択
+    const scores = headcount === 1 ? team1Scores :
+                   headcount === 2 ? team2Scores :
+                   headcount === 3 ? team3Scores :
+                   headcount === 4 ? team4Scores : [];
+
+    scores.forEach(score => {
+      const key = score.teamName;
+      const existing = teamMap.get(key);
+      if (existing) {
+        existing.totalScore += score.score;
+        existing.count += 1;
+      } else {
+        teamMap.set(key, {
+          teamName: score.teamName,
+          headcount: score.headcount,
+          totalScore: score.score,
+          count: 1
+        });
+      }
+    });
 
     return Array.from(teamMap.values())
       .sort((a, b) => b.totalScore - a.totalScore);
@@ -421,7 +489,7 @@ function RankingContent() {
                 className="text-5xl font-extrabold text-white leading-none"
                 style={{ textShadow: '0 0 10px rgba(74, 144, 226, 0.3)' }}
               >
-                {teamScores.length}
+                {team1Scores.length + team2Scores.length + team3Scores.length + team4Scores.length}
               </div>
             </div>
 
