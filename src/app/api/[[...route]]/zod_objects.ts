@@ -361,6 +361,20 @@ export const reservation = z.object({
     .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
 });
 
+// TimeSlot情報を含む予約レスポンス用スキーマ
+export const reservationWithTimeSlot = reservation.extend({
+  timeSlot: z.object({
+    id: z.number().int().positive(),
+    slotTime: z.string(),
+    slotType: z.enum(["RESERVABLE", "WALK_IN"]),
+    status: z.enum(["AVAILABLE", "BOOKED"]),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }).nullable().optional().openapi({
+    description: "関連するタイムスロット情報"
+  }),
+});
+
 export const createReservation = z.object({
   lineUserId: z.string().optional().openapi({
     example: "clig1h2k40000qn8l4g4l4g4l",

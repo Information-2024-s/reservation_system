@@ -2,12 +2,13 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { prisma } from "../../../lib/prisma";
 import {
   reservation,
+  reservationWithTimeSlot,
   createReservation,
   updateReservation,
   idParam,
 } from "./zod_objects";
 import { auth } from "@/auth";
-import { authenticateCombined, getCurrentUserId } from "./auth-helpers";
+import { authenticateCombined, getCurrentUserId, authenticateWithApiKey } from "./auth-helpers";
 import { z } from "zod";
 
 const app = new OpenAPIHono();
@@ -20,13 +21,23 @@ const getReservationsRoute = createRoute({
   path: "/",
   method: "get",
   tags: ["Reservations"],
-  summary: "予約一覧を取得",
+  summary: "予約一覧を取得（APIキー認証のみ）",
   responses: {
     200: {
       description: "OK",
       content: {
         "application/json": {
-          schema: reservation.array(),
+          schema: reservationWithTimeSlot.array(),
+        },
+      },
+    },
+    403: {
+      description: "Forbidden",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
         },
       },
     },
@@ -34,8 +45,15 @@ const getReservationsRoute = createRoute({
 });
 
 app.openapi(getReservationsRoute, async (c) => {
-  const session = await auth();
+  // NextAuth認証の場合はアクセス拒否、APIキーのみ許可
+  const isApiKeyAuth = await authenticateWithApiKey(c);
+  
+  if (!isApiKeyAuth) {
+    // NextAuth認証ユーザーの場合はアクセス不可
+    return c.json({ error: "Forbidden: このエンドポイントはAPIキー認証が必要です" }, 403);
+  }
 
+  const session = await auth();
   console.log("Authenticated session:", session);
 
   const reservations = await prisma.reservation.findMany({
@@ -52,10 +70,17 @@ app.openapi(getReservationsRoute, async (c) => {
     createdAt: reservation.createdAt.toISOString(),
     updatedAt: reservation.updatedAt.toISOString(),
     timeSlotId: reservation.timeSlotId,
-    timeSlot: reservation.timeSlot,
+    timeSlot: reservation.timeSlot ? {
+      id: reservation.timeSlot.id,
+      slotTime: reservation.timeSlot.slotTime.toISOString(),
+      slotType: reservation.timeSlot.slotType,
+      status: reservation.timeSlot.status,
+      createdAt: reservation.timeSlot.createdAt.toISOString(),
+      updatedAt: reservation.timeSlot.updatedAt.toISOString(),
+    } : null,
   }));
 
-  return c.json(formattedReservations);
+  return c.json(formattedReservations, 200);
 });
 
 // 現在のユーザーの予約を取得するルート
@@ -169,7 +194,7 @@ const getReservationRoute = createRoute({
   path: "/{id}",
   method: "get",
   tags: ["Reservations"],
-  summary: "予約詳細を取得",
+  summary: "予約詳細を取得（自分の予約のみ、またはAPIキー認証）",
   request: {
     params: idParam,
   },
@@ -179,6 +204,26 @@ const getReservationRoute = createRoute({
       content: {
         "application/json": {
           schema: reservation,
+        },
+      },
+    },
+    403: {
+      description: "Forbidden",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    404: {
+      description: "Not Found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
         },
       },
     },
@@ -192,15 +237,36 @@ app.openapi(getReservationRoute, async (c) => {
     where: { id },
   });
 
+  if (!reservationRecord) {
+    return c.json({ error: "予約が見つかりません" }, 404);
+  }
+
+  // 所有者チェック：NextAuth認証の場合は自分の予約のみ表示可
+  const isApiKeyAuth = await authenticateWithApiKey(c);
+  
+  if (!isApiKeyAuth) {
+    // NextAuth認証の場合、所有者チェック
+    const currentUserId = await getCurrentUserId(c);
+    
+    if (!currentUserId) {
+      return c.json({ error: "認証が必要です" }, 403);
+    }
+    
+    if (reservationRecord.lineUserId !== currentUserId) {
+      return c.json({ error: "自分の予約のみ表示できます" }, 403);
+    }
+  }
+
   const formattedReservation = {
-    ...reservationRecord!,
-    lineUserId: reservationRecord!.lineUserId,
-    startTime: reservationRecord!.startTime.toISOString(),
-    createdAt: reservationRecord!.createdAt.toISOString(),
-    updatedAt: reservationRecord!.updatedAt.toISOString(),
+    id: reservationRecord.id,
+    lineUserId: reservationRecord.lineUserId,
+    startTime: reservationRecord.startTime.toISOString(),
+    createdAt: reservationRecord.createdAt.toISOString(),
+    updatedAt: reservationRecord.updatedAt.toISOString(),
+    timeSlotId: reservationRecord.timeSlotId,
   };
 
-  return c.json(formattedReservation);
+  return c.json(formattedReservation, 200);
 });
 
 // 予約作成ルート
@@ -413,25 +479,27 @@ app.openapi(updateReservationRoute, async (c) => {
 
   // 現在認証されているユーザーIDを取得
   const currentUserId = await getCurrentUserId(c);
+  const isApiKeyAuth = await authenticateWithApiKey(c);
 
-  // NextAuth認証の場合、予約の所有者チェック
-  if (currentUserId) {
-    const existingReservation = await prisma.reservation.findUnique({
-      where: { id },
-      select: { lineUserId: true },
-    });
+  // 予約の存在確認と所有者チェック
+  const existingReservation = await prisma.reservation.findUnique({
+    where: { id },
+    select: { lineUserId: true },
+  });
 
-    if (!existingReservation) {
-      return c.json({ error: "Reservation not found" }, 404);
+  if (!existingReservation) {
+    return c.json({ error: "Reservation not found" }, 404);
+  }
+
+  // NextAuth認証の場合、所有者チェック
+  if (!isApiKeyAuth) {
+    if (!currentUserId) {
+      return c.json({ error: "認証が必要です" }, 403);
     }
 
-    // lineUserIdがnullの予約は誰でも更新可能（後方互換性のため）
-    if (
-      existingReservation.lineUserId &&
-      existingReservation.lineUserId !== currentUserId
-    ) {
+    if (existingReservation.lineUserId !== currentUserId) {
       return c.json(
-        { error: "Access denied: You can only update your own reservations" },
+        { error: "自分の予約のみ更新できます" },
         403
       );
     }
@@ -502,43 +570,33 @@ app.openapi(deleteReservationRoute, async (c) => {
 
   // 現在認証されているユーザーIDを取得
   const currentUserId = await getCurrentUserId(c);
+  const isApiKeyAuth = await authenticateWithApiKey(c);
 
-  // NextAuth認証の場合、予約の所有者チェック
-  if (currentUserId) {
-    const existingReservation = await prisma.reservation.findUnique({
-      where: { id },
-      select: { lineUserId: true },
-    });
+  // 予約の存在確認
+  const existingReservation = await prisma.reservation.findUnique({
+    where: { id },
+    include: { timeSlot: true },
+  });
 
-  
+  if (!existingReservation) {
+    return c.json({ error: "Reservation not found" }, 404);
+  }
 
-    if (!existingReservation) {
-      return c.json({ error: "Reservation not found" }, 404);
+  // NextAuth認証の場合、所有者チェック
+  if (!isApiKeyAuth) {
+    if (!currentUserId) {
+      return c.json({ error: "認証が必要です" }, 403);
     }
 
-    // lineUserIdがnullの予約は誰でも削除可能（後方互換性のため）
-    if (
-      existingReservation.lineUserId &&
-      existingReservation.lineUserId !== currentUserId
-    ) {
+    if (existingReservation.lineUserId !== currentUserId) {
       return c.json(
-        { error: "Access denied: You can only delete your own reservations" },
+        { error: "自分の予約のみ削除できます" },
         403
       );
     }
   }
 
   try {
-    // まず予約が存在するかチェック
-    const existingReservation = await prisma.reservation.findUnique({
-      where: { id },
-      include: { timeSlot: true },
-    });
-
-    if (!existingReservation) {
-      return c.json({ error: "予約が見つかりません" }, 404);
-    }
-
     // 過去の予約は削除不可
     const now = new Date();
     const reservationTime = existingReservation.timeSlot?.slotTime || existingReservation.startTime;

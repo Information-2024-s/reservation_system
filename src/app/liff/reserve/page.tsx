@@ -238,7 +238,7 @@ export default function ReservePage() {
         alert(
           `予約が完了しました！\n時間: ${formatJSTTime(
             convertUTCToJST(selectedTimeSlot.slotTime)
-          )}\n\nチーム情報は後から追加できます。`
+          )}`
         );
         closeModal();
         // 予約後に既存予約情報を再取得
