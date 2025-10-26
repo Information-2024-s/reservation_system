@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
  */
 export async function getAllReservations() {
   try {
+    console.log('=== getAllReservations: 開始 ===');
+    
     const reservations = await prisma.reservation.findMany({
       include: {
         timeSlot: true,
@@ -15,10 +17,15 @@ export async function getAllReservations() {
       orderBy: { createdAt: "desc" },
     });
 
+    console.log(`取得した予約数: ${reservations.length}`);
+
     // 日付をシリアライズ可能な形式に変換
-    return reservations.map((reservation) => ({
+    const formattedReservations = reservations.map((reservation) => ({
       id: reservation.id,
+      name: reservation.name,
       lineUserId: reservation.lineUserId,
+      callStatus: reservation.callStatus,
+      calledAt: reservation.calledAt?.toISOString() || null,
       startTime: reservation.startTime.toISOString(),
       createdAt: reservation.createdAt.toISOString(),
       updatedAt: reservation.updatedAt.toISOString(),
@@ -34,8 +41,14 @@ export async function getAllReservations() {
           }
         : null,
     }));
+    
+    console.log('=== getAllReservations: 成功 ===');
+    return formattedReservations;
   } catch (error) {
+    console.error("=== getAllReservations: エラー ===");
     console.error("Failed to fetch reservations:", error);
+    console.error("Error details:", error instanceof Error ? error.message : String(error));
+    console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
     throw new Error("予約の取得に失敗しました");
   }
 }
@@ -84,5 +97,65 @@ export async function deleteReservationById(id: number) {
   } catch (error) {
     console.error("Failed to delete reservation:", error);
     throw error instanceof Error ? error : new Error("予約の削除に失敗しました");
+  }
+}
+
+/**
+ * スタッフ用：予約を「呼んだ」としてマーク
+ */
+export async function markReservationAsCalled(id: number) {
+  try {
+    const updatedReservation = await prisma.reservation.update({
+      where: { id },
+      data: {
+        callStatus: "CALLED",
+        calledAt: new Date(),
+      },
+    });
+
+    return { success: true, reservation: updatedReservation };
+  } catch (error) {
+    console.error("Failed to mark reservation as called:", error);
+    throw error instanceof Error ? error : new Error("予約の更新に失敗しました");
+  }
+}
+
+/**
+ * スタッフ用：予約を「不在」としてマーク
+ */
+export async function markReservationAsNoShow(id: number) {
+  try {
+    const updatedReservation = await prisma.reservation.update({
+      where: { id },
+      data: {
+        callStatus: "NO_SHOW",
+        calledAt: new Date(),
+      },
+    });
+
+    return { success: true, reservation: updatedReservation };
+  } catch (error) {
+    console.error("Failed to mark reservation as no-show:", error);
+    throw error instanceof Error ? error : new Error("予約の更新に失敗しました");
+  }
+}
+
+/**
+ * スタッフ用：呼び出しステータスをリセット
+ */
+export async function resetCallStatus(id: number) {
+  try {
+    const updatedReservation = await prisma.reservation.update({
+      where: { id },
+      data: {
+        callStatus: "NOT_CALLED",
+        calledAt: null,
+      },
+    });
+
+    return { success: true, reservation: updatedReservation };
+  } catch (error) {
+    console.error("Failed to reset call status:", error);
+    throw error instanceof Error ? error : new Error("ステータスのリセットに失敗しました");
   }
 }

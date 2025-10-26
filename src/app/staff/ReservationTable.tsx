@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { deleteReservationById } from "./actions";
+import { 
+  deleteReservationById, 
+  markReservationAsCalled, 
+  markReservationAsNoShow,
+  resetCallStatus 
+} from "./actions";
 import { useRouter } from "next/navigation";
 
 interface TimeSlot {
@@ -17,7 +22,10 @@ interface TimeSlot {
 
 interface Reservation {
   id: number;
+  name: string;
   lineUserId: string | null;
+  callStatus: "NOT_CALLED" | "CALLED" | "NO_SHOW";
+  calledAt: string | null;
   startTime: string;
   createdAt: string;
   updatedAt: string;
@@ -49,6 +57,49 @@ export default function ReservationTable({ initialReservations }: Props) {
       });
     } catch (err) {
       alert(err instanceof Error ? err.message : "削除に失敗しました");
+    }
+  };
+
+  const handleMarkAsCalled = async (id: number) => {
+    try {
+      await markReservationAsCalled(id);
+      
+      // ページをリフレッシュ
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "更新に失敗しました");
+    }
+  };
+
+  const handleMarkAsNoShow = async (id: number) => {
+    if (!confirm("この予約を不在としてマークしますか？")) {
+      return;
+    }
+
+    try {
+      await markReservationAsNoShow(id);
+      
+      // ページをリフレッシュ
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "更新に失敗しました");
+    }
+  };
+
+  const handleResetCallStatus = async (id: number) => {
+    try {
+      await resetCallStatus(id);
+      
+      // ページをリフレッシュ
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "リセットに失敗しました");
     }
   };
 
@@ -137,10 +188,16 @@ export default function ReservationTable({ initialReservations }: Props) {
                   予約ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  予約者名
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   予約日時
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   スロットタイプ
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  呼び出し状態
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ステータス
@@ -168,6 +225,9 @@ export default function ReservationTable({ initialReservations }: Props) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       #{reservation.id}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                      {reservation.name}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {format(reservationTime, "yyyy年M月d日(E) HH:mm", { locale: ja })}
                     </td>
@@ -183,6 +243,21 @@ export default function ReservationTable({ initialReservations }: Props) {
                       ) : (
                         <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
                           不明
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {reservation.callStatus === "CALLED" ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                          🔔 呼出済
+                        </span>
+                      ) : reservation.callStatus === "NO_SHOW" ? (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                          ❌ 不在
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                          ⏱ 未呼出
                         </span>
                       )}
                     </td>
@@ -209,14 +284,56 @@ export default function ReservationTable({ initialReservations }: Props) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {format(new Date(reservation.createdAt), "yyyy/M/d HH:mm", { locale: ja })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleDeleteReservation(reservation.id)}
-                        className="text-red-600 hover:text-red-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isPast || isPending}
-                      >
-                        {isPast ? "削除不可" : "削除"}
-                      </button>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex flex-col gap-2">
+                        {!isPast && (
+                          <div className="flex gap-2">
+                            {reservation.callStatus === "NOT_CALLED" && (
+                              <button
+                                onClick={() => handleMarkAsCalled(reservation.id)}
+                                disabled={isPending}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
+                              >
+                                呼ぶ
+                              </button>
+                            )}
+                            {reservation.callStatus === "CALLED" && (
+                              <>
+                                <button
+                                  onClick={() => handleMarkAsNoShow(reservation.id)}
+                                  disabled={isPending}
+                                  className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
+                                >
+                                  不在
+                                </button>
+                                <button
+                                  onClick={() => handleResetCallStatus(reservation.id)}
+                                  disabled={isPending}
+                                  className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
+                                >
+                                  リセット
+                                </button>
+                              </>
+                            )}
+                            {reservation.callStatus === "NO_SHOW" && (
+                              <button
+                                onClick={() => handleResetCallStatus(reservation.id)}
+                                disabled={isPending}
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
+                              >
+                                リセット
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleDeleteReservation(reservation.id)}
+                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
+                          disabled={isPast || isPending}
+                        >
+                          {isPast ? "削除不可" : "削除"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

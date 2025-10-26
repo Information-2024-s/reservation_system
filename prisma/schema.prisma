@@ -16,6 +16,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SlotType {
+  RESERVABLE
+  WALK_IN
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+}
+
+enum CallStatus {
+  NOT_CALLED
+  CALLED
+  NO_SHOW
+}
+
 model TimeSlot {
   id          Int          @id @default(autoincrement())
   slotTime    DateTime     @unique
@@ -27,16 +43,20 @@ model TimeSlot {
 }
 
 model Reservation {
-  id         Int       @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
+  name       String
   startTime  DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  timeSlotId Int?      @unique
+  callStatus CallStatus @default(NOT_CALLED)
+  calledAt   DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  timeSlotId Int?       @unique
   lineUserId String?
-  timeSlot   TimeSlot? @relation(fields: [timeSlotId], references: [id])
+  timeSlot   TimeSlot?  @relation(fields: [timeSlotId], references: [id])
 
   @@index([timeSlotId])
   @@index([lineUserId])
+  @@index([callStatus])
 }
 
 model TeamScore {
@@ -65,14 +85,4 @@ model PlayerScore {
 
   @@index([playerName])
   @@index([team_score_id])
-}
-
-enum SlotType {
-  RESERVABLE
-  WALK_IN
-}
-
-enum SlotStatus {
-  AVAILABLE
-  BOOKED
 }

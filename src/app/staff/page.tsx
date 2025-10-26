@@ -1,8 +1,33 @@
 import { getAllReservations } from "./actions";
 import ReservationTable from "./ReservationTable";
 
+type Reservation = Awaited<ReturnType<typeof getAllReservations>>[number];
+
 export default async function StaffPage() {
-  const reservations = await getAllReservations();
+  let reservations: Reservation[] = [];
+  let error: string | null = null;
+
+  try {
+    reservations = await getAllReservations();
+    console.log('StaffPage: 予約取得成功', reservations.length);
+  } catch (e) {
+    console.error('StaffPage: 予約取得エラー', e);
+    error = e instanceof Error ? e.message : '予約の取得に失敗しました';
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-bold text-red-900 mb-2">エラー</h2>
+          <p className="text-red-700">{error}</p>
+          <p className="text-sm text-red-600 mt-2">
+            サーバーログを確認してください。データベース接続を確認してください。
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

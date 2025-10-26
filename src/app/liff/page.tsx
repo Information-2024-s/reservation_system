@@ -52,9 +52,14 @@ export default function Home() {
           <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
             初期化エラー
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
+          <p className="text-gray-600 dark:text-gray-300 mb-2">
             アプリの初期化に失敗しました
           </p>
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 mb-4 text-left">
+            <p className="text-xs text-gray-700 dark:text-gray-300 font-mono break-words">
+              {liffError}
+            </p>
+          </div>
           <button 
             onClick={() => window.location.reload()}
             className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"

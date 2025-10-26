@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TimeSlot, convertUTCToJST, formatJSTTime } from "./types";
 
 interface ReservationModalProps {
@@ -8,7 +8,7 @@ interface ReservationModalProps {
   profile: { displayName?: string } | null;
   availableDates: { value: string; label: string }[];
   onClose: () => void;
-  onReserveDirect: () => void;
+  onReserveDirect: (name: string) => void;
 }
 
 export default function ReservationModal({
@@ -20,9 +20,19 @@ export default function ReservationModal({
   onClose,
   onReserveDirect,
 }: ReservationModalProps) {
+  const [name, setName] = useState(profile?.displayName || "");
+
   if (!isOpen || !selectedTimeSlot) {
     return null;
   }
+
+  const handleSubmit = () => {
+    if (!name.trim()) {
+      alert("名前を入力してください");
+      return;
+    }
+    onReserveDirect(name.trim());
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto modal-scroll">
@@ -45,12 +55,17 @@ export default function ReservationModal({
           </div>
 
           <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">
-              予約者
+            <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              予約者名 <span className="text-red-500">*</span>
             </div>
-            <div className="font-bold text-gray-900 dark:text-gray-100">
-              {profile?.displayName || "ゲスト"} 様
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="お名前を入力してください"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={50}
+            />
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -78,7 +93,7 @@ export default function ReservationModal({
 
         <div className="space-y-3">
           <button
-            onClick={onReserveDirect}
+            onClick={handleSubmit}
             className="w-full bg-blue-500 dark:bg-blue-600 text-white py-3 px-4 rounded-lg font-bold hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             予約を確定

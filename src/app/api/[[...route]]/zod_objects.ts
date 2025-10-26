@@ -340,6 +340,9 @@ export const reservation = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "予約ID" }),
+  name: z
+    .string()
+    .openapi({ example: "山田太郎", description: "予約者名" }),
   lineUserId: z.string().nullable().openapi({
     example: "clig1h2k40000qn8l4g4l4g4l",
     description: "LINE ユーザーID",
@@ -376,6 +379,10 @@ export const reservationWithTimeSlot = reservation.extend({
 });
 
 export const createReservation = z.object({
+  name: z
+    .string()
+    .min(1, "名前は必須です")
+    .openapi({ example: "山田太郎", description: "予約者名" }),
   lineUserId: z.string().optional().openapi({
     example: "clig1h2k40000qn8l4g4l4g4l",
     description: "LINE ユーザーID（NextAuth使用時は自動設定）",

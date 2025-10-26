@@ -19,6 +19,7 @@ function LiffProvider({ children, enableLiff }: AppProvidersProps) {
 	const [liffObject, setLiffObject] = useState<Liff | null>(null);
 	const [liffError, setLiffError] = useState<string | null>(null);
 	const hasTriedSignInRef = useRef(false);
+	const hasInitializedRef = useRef(false);
 	const { update } = useSession();
 
 	const handleLogout = useCallback(async () => {
@@ -40,6 +41,11 @@ function LiffProvider({ children, enableLiff }: AppProvidersProps) {
 			return;
 		}
 
+		// 既に初期化済みの場合はスキップ
+		if (hasInitializedRef.current) {
+			return;
+		}
+
 		let isCancelled = false;
 
 		const init = async () => {
@@ -54,18 +60,28 @@ function LiffProvider({ children, enableLiff }: AppProvidersProps) {
 			try {
 				const { default: liff } = await import("@line/liff");
 
-				await liff.init({
-					liffId,
-					withLoginOnExternalBrowser: true,
-				});
+				// LIFF初期化（既に初期化済みの場合はエラーをキャッチして継続）
+				try {
+					await liff.init({
+						liffId,
+						withLoginOnExternalBrowser: true,
+					});
 
-				const readyPromise = (liff as ReadyPromise).ready;
-				if (readyPromise && typeof readyPromise.then === "function") {
-					await readyPromise;
+					const readyPromise = (liff as ReadyPromise).ready;
+					if (readyPromise && typeof readyPromise.then === "function") {
+						await readyPromise;
+					}
+				} catch (initError) {
+					// 既に初期化済みの場合のエラーは無視
+					if (initError instanceof Error && !initError.message.includes("already initialized")) {
+						throw initError;
+					}
+					console.log("LIFF already initialized, continuing...");
 				}
 
 				if (isCancelled) return;
 
+				hasInitializedRef.current = true;
 				setLiffObject(liff);
 				setLiffError(null);
 
@@ -99,7 +115,7 @@ function LiffProvider({ children, enableLiff }: AppProvidersProps) {
 		return () => {
 			isCancelled = true;
 		};
-	}, [enableLiff, update]);
+	}, [enableLiff]);
 
 	return (
 		<GlobalContext.Provider

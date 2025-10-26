@@ -65,6 +65,7 @@ app.openapi(getReservationsRoute, async (c) => {
 
   const formattedReservations = reservations.map((reservation) => ({
     id: reservation.id,
+    name: reservation.name,
     lineUserId: reservation.lineUserId,
     startTime: reservation.startTime.toISOString(),
     createdAt: reservation.createdAt.toISOString(),
@@ -167,6 +168,7 @@ app.openapi(getCurrentUserReservationRoute, async (c) => {
 
   const formattedReservation = {
     id: userReservation.id,
+    name: userReservation.name,
     lineUserId: userReservation.lineUserId,
     startTime: userReservation.startTime.toISOString(),
     createdAt: userReservation.createdAt.toISOString(),
@@ -259,6 +261,7 @@ app.openapi(getReservationRoute, async (c) => {
 
   const formattedReservation = {
     id: reservationRecord.id,
+    name: reservationRecord.name,
     lineUserId: reservationRecord.lineUserId,
     startTime: reservationRecord.startTime.toISOString(),
     createdAt: reservationRecord.createdAt.toISOString(),
@@ -367,6 +370,7 @@ app.openapi(createReservationRoute, async (c) => {
 
       // 3. 予約作成
       const reservationData = {
+        name: data.name,
         startTime: timeSlot.slotTime,
         timeSlotId: data.timeSlotId,
         lineUserId: null as string | null,

@@ -47,6 +47,7 @@ export default function ReservePage() {
   interface UserReservation {
     reservation: {
       id: number;
+      name: string;
       teamId: number | null;
       lineUserId: string | null;
       startTime: string;
@@ -206,14 +207,16 @@ export default function ReservePage() {
   };
 
   // チーム情報なしで直接予約
-  const handleDirectReservation = async () => {
+  const handleDirectReservation = async (name: string) => {
     if (!selectedTimeSlot) return;
 
     console.log("=== 直接予約開始 ===");
     console.log("選択されたタイムスロット:", selectedTimeSlot);
+    console.log("予約者名:", name);
 
     try {
       const requestBody = {
+        name,
         timeSlotId: selectedTimeSlot.id,
       };
 

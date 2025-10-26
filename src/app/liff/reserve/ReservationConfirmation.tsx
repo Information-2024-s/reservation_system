@@ -4,6 +4,7 @@ import { formatJSTTime, convertUTCToJST } from "./types";
 interface UserReservation {
   reservation: {
     id: number;
+    name: string;
     teamId: number | null;
     lineUserId: string | null;
     startTime: string;
@@ -82,6 +83,16 @@ export default function ReservationConfirmation({
             </p>
           </div>
         )}
+
+        {/* 予約者名 */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+            予約者名
+          </p>
+          <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            {reservation.name}
+          </p>
+        </div>
 
         {/* チーム情報 */}
         {team && (
