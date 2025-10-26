@@ -63,7 +63,7 @@ app.openapi(getTeamScoresRoute, async (c) => {
     const skip = (pageNum - 1) * limitNum;
 
     // ソート条件を構築
-    const orderBy: any = {};
+    const orderBy: Partial<Record<'id' | 'score' | 'createdAt', 'asc' | 'desc'>> = {};
     orderBy[sortBy] = sortOrder;
 
     // 総件数を取得
