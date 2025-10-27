@@ -33,7 +33,13 @@ LINE_CHANNEL_SECRET="your-channel-secret"
 npx prisma migrate dev
 ```
 
-4. 開発サーバーの起動
+4. データベースへのシード（初期データ投入）
+
+```bash
+npx prisma db seed
+```
+
+5. 開発サーバーの起動
 
 ```bash
 npm run dev
@@ -45,99 +51,9 @@ APIドキュメントはSwagger UIで確認できます：
 
 **Swagger UI**: http://localhost:3000/api/doc
 
-## API エンドポイント
+詳細なAPI仕様、エンドポイント、リクエスト/レスポンス例はSwagger UIをご参照ください。
 
-### Users (ユーザー管理)
-
-- `GET /api/users` - ユーザー一覧取得
-- `GET /api/users/{id}` - ユーザー詳細取得
-- `POST /api/users` - ユーザー作成
-- `PATCH /api/users/{id}` - ユーザー更新  
-- `DELETE /api/users/{id}` - ユーザー削除
-
-### Reservations (予約管理)
-
-- `GET /api/reservations` - 予約一覧取得
-- `GET /api/reservations/{id}` - 予約詳細取得
-- `POST /api/reservations` - 予約作成
-- `PATCH /api/reservations/{id}` - 予約更新
-- `DELETE /api/reservations/{id}` - 予約削除
-
-### LINE Webhook
-
-- `POST /api/line/webhook` - LINE公式アカウントのWebhookを受信し、受け取ったテキストメッセージをそのまま返信（LINE Messaging APIを利用）
-- 待ち時間に関する問い合わせの場合は、`TimeSlot` テーブルから次の空き枠を検索し、実際の待ち時間を返します
-- LINE公式Webhookからのリクエストは `X-Line-Signature` と `LINE_CHANNEL_SECRET` を用いて検証されます
-
-### Scores (スコア管理)
-
-- `GET /api/scores` - スコア一覧取得
-- `GET /api/scores/{id}` - スコア詳細取得
-- `POST /api/scores` - スコア作成
-- `PATCH /api/scores/{id}` - スコア更新
-- `DELETE /api/scores/{id}` - スコア削除
-
-## 使用例
-
-### ユーザー作成
-
-```bash
-curl -X POST http://localhost:3000/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"name": "田中太郎"}'
-```
-
-### 予約作成
-
-```bash
-curl -X POST http://localhost:3000/api/reservations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": 1,
-    "receiptNumber": "R-12345",
-    "numberOfPeople": 4,
-    "startTime": "2024-01-01T18:00:00Z",
-    "endTime": "2024-01-01T20:00:00Z"
-  }'
-```
-
-### スコア作成
-
-```bash
-curl -X POST http://localhost:3000/api/scores \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": 1,
-    "score": 100
-  }'
-```
-
-## データベーススキーマ
-
-### User (ユーザー)
-- `id`: number (主キー)
-- `name`: string (ユーザー名)
-- `createdAt`: Date (作成日時)
-- `updatedAt`: Date (更新日時)
-
-### Reservation (予約)
-- `id`: number (主キー)
-- `userId`: number (ユーザーID)
-- `receiptNumber`: string (レシート番号)
-- `numberOfPeople`: number (人数)
-- `startTime`: Date (開始時刻)
-- `endTime`: Date (終了時刻)
-- `createdAt`: Date (作成日時)
-- `updatedAt`: Date (更新日時)
-
-### Score (スコア)
-- `id`: number (主キー)
-- `userId`: number (ユーザーID)
-- `score`: number (スコア)
-- `createdAt`: Date (作成日時)
-- `updatedAt`: Date (更新日時)
-
-## 開発
+## データベース管理
 
 ### スキーマ更新
 Prismaスキーマを更新した場合：
@@ -152,168 +68,72 @@ npx prisma migrate dev --name describe_your_changes
 ```bash
 npx prisma studio
 ```
+
+### シードデータの管理
+
+データベースに初期データを投入するためのシードコマンドが用意されています。
+
+#### 全データをシード（通常）
+```bash
+npx prisma db seed
 ```
 
-#### 特定のユーザー取得
+#### 個別操作（詳細なコントロールが必要な場合）
 
-```
-GET /api/users/{id}
-```
-
-#### ユーザー更新
-
-```
-PUT /api/users/{id}
-Content-Type: application/json
-
-{
-  "name": "田中次郎"
-}
+##### TimeSlotのみシード
+```bash
+npx tsx prisma/seed.ts seed:timeslots
 ```
 
-#### ユーザー削除
-
-```
-DELETE /api/users/{id}
-```
-
-### スコア管理
-
-#### 全スコア取得
-
-```
-GET /api/scores
+##### スコアデータのみシード
+```bash
+npx tsx prisma/seed.ts seed:scores
 ```
 
-#### スコア作成
-
-```
-POST /api/scores
-Content-Type: application/json
-
-{
-  "userId": 1,
-  "score": 85
-}
+##### 全データをシード
+```bash
+npx tsx prisma/seed.ts seed:all
 ```
 
-#### 特定のスコア取得
+#### データのリセット
 
-```
-GET /api/scores/{id}
-```
-
-#### スコア更新
-
-```
-PUT /api/scores/{id}
-Content-Type: application/json
-
-{
-  "score": 90
-}
+##### 全テーブルをリセット
+```bash
+npx tsx prisma/seed.ts reset:all
 ```
 
-#### スコア削除
-
-```
-DELETE /api/scores/{id}
-```
-
-### 予約管理
-
-#### 全予約取得
-
-```
-GET /api/reservations
+##### TimeSlots（とReservations）をリセット
+```bash
+npx tsx prisma/seed.ts reset:timeslots
 ```
 
-#### 予約作成
-
-```
-POST /api/reservations
-Content-Type: application/json
-
-{
-  "userId": 1,
-  "receiptNumber": "R001",
-  "numberOfPeople": 4,
-  "startTime": "2024-01-15T18:00:00Z",
-  "endTime": "2024-01-15T20:00:00Z"
-}
+##### Reservationsのみリセット
+```bash
+npx tsx prisma/seed.ts reset:reservations
 ```
 
-#### 特定の予約取得
-
-```
-GET /api/reservations/{id}
-```
-
-#### 予約更新
-
-```
-PUT /api/reservations/{id}
-Content-Type: application/json
-
-{
-  "receiptNumber": "R002",
-  "numberOfPeople": 6,
-  "startTime": "2024-01-15T19:00:00Z",
-  "endTime": "2024-01-15T21:00:00Z"
-}
+##### TeamScores（とPlayerScores）をリセット
+```bash
+npx tsx prisma/seed.ts reset:teamscores
 ```
 
-#### 予約削除
-
-```
-DELETE /api/reservations/{id}
-```
-
-### 関連データ取得
-
-#### 特定のユーザーのスコア取得
-
-```
-GET /api/users/scores?userId={userId}
+##### PlayerScoresのみリセット
+```bash
+npx tsx prisma/seed.ts reset:playerscores
 ```
 
-#### 特定のユーザーの予約取得
-
+##### TmpScoresをリセット
+```bash
+npx tsx prisma/seed.ts reset:tmpscores
 ```
-GET /api/users/reservations?userId={userId}
+
+#### ヘルプ
+利用可能なコマンド一覧を表示：
+```bash
+npx tsx prisma/seed.ts help
 ```
-
-## データベーススキーマ
-
-### User
-
-- `id`: 主キー(自動増分)
-- `name`: ユーザー名
-- `createdAt`: 作成日時
-- `updatedAt`: 更新日時
-
-### Score
-
-- `id`: 主キー(自動増分)
-- `userId`: ユーザー ID(外部キー)
-- `score`: スコア
-- `createdAt`: 作成日時
-- `updatedAt`: 更新日時
-
-### Reservation
-
-- `id`: 主キー(自動増分)
-- `userId`: ユーザー ID(外部キー)
-- `receiptNumber`: 受付番号
-- `numberOfPeople`: 人数
-- `startTime`: 開始時刻
-- `endTime`: 終了時刻
-- `createdAt`: 作成日時
-- `updatedAt`: 更新日時
 
 ## ランキングページ（ディスプレイ常時表示用）
-
-ランキングページ (`/ranking`) は、クラス展示での廊下ディスプレイ常時表示用に最適化されています。
 
 ### 機能
 
@@ -393,4 +213,4 @@ http://localhost:3000/ranking?auto=true&interval=10&refresh=10
 - **[Prisma ERD Generator](https://github.com/keonik/prisma-erd-generator)** - Prismaスキーマから図を生成
 - **[Mermaid CLI](https://mermaid.js.org/)** - 図表生成ツール
 
-これらのライブラリの開発者・コントリビューターの皆様に感謝いたします。
+これらのライブラリの開発者・コントリビューターの皆様に感謝

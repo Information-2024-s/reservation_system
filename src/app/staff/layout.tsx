@@ -27,6 +27,12 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
               >
                 スコア管理
               </Link>
+              <Link
+                href="/staff/tmpscores"
+                className="px-4 py-2 rounded-lg transition-colors hover:bg-purple-100 text-purple-700 font-medium"
+              >
+                仮スコア管理
+              </Link>
             </nav>
           </div>
         </div>

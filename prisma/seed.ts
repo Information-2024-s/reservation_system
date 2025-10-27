@@ -1,25 +1,58 @@
-import { PrismaClient, SlotType, SlotStatus } from "@prisma/client";
+import { PrismaClient, SlotType, SlotStatus, Stage } from "@prisma/client";
 
 // PrismaClientのインスタンスを作成
 const prisma = new PrismaClient();
 
-// シード処理を実行するメイン関数
-async function main() {
-  console.log("Seeding started...");
-
-  // 外部キー制約のため、関連するモデルから先に削除する
+// リセット関数群
+async function resetReservations() {
+  console.log("Resetting Reservations...");
   await prisma.reservation.deleteMany({});
-  await prisma.timeSlot.deleteMany({});
-  await prisma.playerScore.deleteMany({});
-  await prisma.teamScore.deleteMany({});
-  console.log("Cleared existing data.");
-
-  // シーケンスを0からリセット
-  await prisma.$executeRaw`ALTER SEQUENCE "TeamScore_id_seq" RESTART WITH 1`;
-  await prisma.$executeRaw`ALTER SEQUENCE "PlayerScore_id_seq" RESTART WITH 1`;
-  await prisma.$executeRaw`ALTER SEQUENCE "TimeSlot_id_seq" RESTART WITH 1`;
   await prisma.$executeRaw`ALTER SEQUENCE "Reservation_id_seq" RESTART WITH 1`;
-  console.log("Reset sequences to start from 1.");
+  console.log("Reservations reset completed.");
+}
+
+async function resetTimeSlots() {
+  console.log("Resetting TimeSlots...");
+  await resetReservations(); // 外部キー制約のため先にReservationを削除
+  await prisma.timeSlot.deleteMany({});
+  await prisma.$executeRaw`ALTER SEQUENCE "TimeSlot_id_seq" RESTART WITH 1`;
+  console.log("TimeSlots reset completed.");
+}
+
+async function resetPlayerScores() {
+  console.log("Resetting PlayerScores...");
+  await prisma.playerScore.deleteMany({});
+  await prisma.$executeRaw`ALTER SEQUENCE "PlayerScore_id_seq" RESTART WITH 1`;
+  console.log("PlayerScores reset completed.");
+}
+
+async function resetTeamScores() {
+  console.log("Resetting TeamScores...");
+  await resetPlayerScores(); // 外部キー制約のため先にPlayerScoreを削除
+  await prisma.teamScore.deleteMany({});
+  await prisma.$executeRaw`ALTER SEQUENCE "TeamScore_id_seq" RESTART WITH 1`;
+  console.log("TeamScores reset completed.");
+}
+
+async function resetTmpScores() {
+  console.log("Resetting TmpScores...");
+  await prisma.tmpScore.deleteMany({});
+  console.log("TmpScores reset completed.");
+}
+
+async function resetAll() {
+  console.log("Resetting all tables...");
+  await resetTimeSlots();
+  await resetTeamScores();
+  await resetTmpScores();
+  console.log("All tables reset completed.");
+}
+
+// TimeSlot作成関数
+async function seedTimeSlots() {
+  console.log("Seeding TimeSlots...");
+
+  await resetTimeSlots();
 
   // --- 設定値 ---
   const DATES_TO_SEED = ["2025-11-01", "2025-11-02"]; // 対象の日付 (年は適宜変更してください)
@@ -73,6 +106,14 @@ async function main() {
   });
 
   console.log(`Created ${slotsToCreate.length} time slots.`);
+}
+
+// スコアデータ作成関数
+async function seedScores() {
+  console.log("Seeding Scores...");
+
+  await resetTeamScores();
+  await resetTmpScores();
 
   // --- TeamScoreのテストデータを作成 ---
   const teamScoresData = [
@@ -186,11 +227,138 @@ async function main() {
   }
 
   console.log(`Created ${playerScoresData.length} player scores.`);
-  console.log("Seeding finished successfully.");
+
+  // --- TmpScoreのテストデータを作成 ---
+  const tmpScoresData = [
+    // ID 1 - 3つのステージすべて完了
+    { id: 1, stage: Stage.First, score: 4500 },
+    { id: 1, stage: Stage.Second, score: 5200 },
+    { id: 1, stage: Stage.Third, score: 6800 },
+    
+    // ID 2 - 2ステージまで完了
+    { id: 2, stage: Stage.First, score: 3800 },
+    { id: 2, stage: Stage.Second, score: 4900 },
+    
+    // ID 3 - 1ステージのみ
+    { id: 3, stage: Stage.First, score: 5500 },
+    
+    // ID 4 - 3ステージすべて完了（高スコア）
+    { id: 4, stage: Stage.First, score: 6200 },
+    { id: 4, stage: Stage.Second, score: 7100 },
+    { id: 4, stage: Stage.Third, score: 8500 },
+    
+    // ID 5 - 3ステージすべて完了
+    { id: 5, stage: Stage.First, score: 4200 },
+    { id: 5, stage: Stage.Second, score: 5600 },
+    { id: 5, stage: Stage.Third, score: 7200 },
+    
+    // ID 6 - 2ステージまで完了
+    { id: 6, stage: Stage.First, score: 3500 },
+    { id: 6, stage: Stage.Second, score: 4200 },
+    
+    // ID 7 - 1ステージのみ
+    { id: 7, stage: Stage.First, score: 4800 },
+    
+    // ID 8 - 3ステージすべて完了（低スコア）
+    { id: 8, stage: Stage.First, score: 3200 },
+    { id: 8, stage: Stage.Second, score: 3900 },
+    { id: 8, stage: Stage.Third, score: 4500 },
+    
+    // ID 9 - 2ステージまで完了
+    { id: 9, stage: Stage.First, score: 5100 },
+    { id: 9, stage: Stage.Second, score: 6300 },
+    
+    // ID 10 - 3ステージすべて完了
+    { id: 10, stage: Stage.First, score: 5800 },
+    { id: 10, stage: Stage.Second, score: 6700 },
+    { id: 10, stage: Stage.Third, score: 7900 },
+  ];
+
+  for (const tmpData of tmpScoresData) {
+    await prisma.tmpScore.create({
+      data: tmpData,
+    });
+  }
+
+  console.log(`Created ${tmpScoresData.length} tmp scores.`);
+  console.log("Seeding Scores finished successfully.");
+}
+
+// メイン関数
+async function main() {
+  console.log("Seeding started...");
+  
+  // TimeSlotの作成
+  await seedTimeSlots();
+  
+  // スコアデータの作成
+  await seedScores();
+  
+  console.log("All seeding finished successfully.");
+}
+
+// コマンドライン引数で実行する関数を選択
+async function executeCommand() {
+  const command = process.argv[2];
+
+  switch (command) {
+    // リセット系
+    case "reset:all":
+      await resetAll();
+      break;
+    case "reset:timeslots":
+      await resetTimeSlots();
+      break;
+    case "reset:reservations":
+      await resetReservations();
+      break;
+    case "reset:teamscores":
+      await resetTeamScores();
+      break;
+    case "reset:playerscores":
+      await resetPlayerScores();
+      break;
+    case "reset:tmpscores":
+      await resetTmpScores();
+      break;
+
+    // シード系
+    case "seed:all":
+      await main();
+      break;
+    case "seed:timeslots":
+      await seedTimeSlots();
+      break;
+    case "seed:scores":
+      await seedScores();
+      break;
+
+    // デフォルト（引数なし）
+    default:
+      if (command) {
+        console.error(`Unknown command: ${command}`);
+        console.log("\nAvailable commands:");
+        console.log("  Reset commands:");
+        console.log("    reset:all          - Reset all tables");
+        console.log("    reset:timeslots    - Reset TimeSlots (and Reservations)");
+        console.log("    reset:reservations - Reset Reservations only");
+        console.log("    reset:teamscores   - Reset TeamScores (and PlayerScores)");
+        console.log("    reset:playerscores - Reset PlayerScores only");
+        console.log("    reset:tmpscores    - Reset TmpScores");
+        console.log("\n  Seed commands:");
+        console.log("    seed:all           - Seed all data (default)");
+        console.log("    seed:timeslots     - Seed TimeSlots only");
+        console.log("    seed:scores        - Seed Scores only");
+        process.exit(1);
+      } else {
+        // 引数がない場合はデフォルトで全データをシード
+        await main();
+      }
+  }
 }
 
 // メイン関数を実行し、エラーハンドリングを行う
-main()
+executeCommand()
   .catch((e) => {
     console.error(e);
     process.exit(1);

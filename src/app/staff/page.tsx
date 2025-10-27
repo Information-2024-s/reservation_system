@@ -9,7 +9,7 @@ export default function StaffDashboard() {
       </div>
 
       {/* 機能カード */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* 予約管理カード */}
         <Link href="/staff/reservations">
           <div className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
@@ -95,6 +95,49 @@ export default function StaffDashboard() {
             </div>
           </div>
         </Link>
+
+        {/* 仮スコア管理カード */}
+        <Link href="/staff/tmpscores">
+          <div className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-purple-500">
+            <div className="flex items-center mb-4">
+              <div className="bg-purple-100 rounded-lg p-3">
+                <svg
+                  className="w-8 h-8 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </div>
+              <h3 className="ml-4 text-xl font-bold text-gray-900">仮スコア管理</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              各ステージの仮スコアを記録・管理します
+            </p>
+            <div className="flex items-center text-purple-600 font-medium">
+              <span>仮スコア管理を開く</span>
+              <svg
+                className="w-5 h-5 ml-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* 追加情報 */}
@@ -108,6 +151,10 @@ export default function StaffDashboard() {
           <li className="flex items-start">
             <span className="mr-2">•</span>
             <span>スコア管理では、チームとプレイヤーのスコアを記録できます</span>
+          </li>
+          <li className="flex items-start">
+            <span className="mr-2">•</span>
+            <span>仮スコア管理では、各ステージごとのスコアを一時保存できます</span>
           </li>
           <li className="flex items-start">
             <span className="mr-2">•</span>
