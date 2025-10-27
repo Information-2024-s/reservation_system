@@ -696,6 +696,42 @@ body::after {
   }
 }
 
+/* ===== Instagram埋め込み（修正版） ===== */
+.instagram-container {
+  width: 100%;
+  max-width: 800px; /* 全体の最大幅 */
+  margin: 40px auto; /* 中央寄せ＋上下余白 */
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+/* Instagramの埋め込み全体に影や角丸を適用 */
+.instagram-container blockquote.instagram-media {
+  width: 100% !important;
+  max-width: 100% !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin: 0 auto !important;
+  overflow: hidden;
+  display: block;
+}
+
+/* スマホ〜タブレット幅 */
+@media (min-width: 420px) {
+  .instagram-container {
+    padding: 0 8px;
+  }
+}
+
+/* タブレット以上で少し余裕を持たせる */
+@media (min-width: 768px) {
+  .instagram-container {
+    max-width: 700px;
+  }
+}
+
+
 /* 横の黒帯の設定 */
 
 /* 横幅451px以上 */
