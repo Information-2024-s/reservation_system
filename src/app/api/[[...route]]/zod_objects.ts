@@ -511,3 +511,53 @@ export const errorResponse = z.object({
     .optional()
     .openapi({ example: "詳細なエラー情報", description: "エラーの詳細" }),
 });
+
+// TmpScore Zod Object
+export const tmpScore = z.object({
+  id: z
+    .number()
+    .int()
+    .positive()
+    .openapi({ example: 1, description: "ID" }),
+  stage: z
+    .enum(["First", "Second", "Third"])
+    .openapi({ example: "First", description: "ステージ" }),
+  score: z
+    .number()
+    .int()
+    .nonnegative()
+    .openapi({ example: 12500, description: "スコア" }),
+  createdAt: z
+    .string()
+    .datetime()
+    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
+  updatedAt: z
+    .string()
+    .datetime()
+    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
+});
+
+export const createTmpScore = z.object({
+  id: z
+    .number()
+    .int()
+    .positive()
+    .openapi({ example: 1, description: "ID" }),
+  stage: z
+    .enum(["First", "Second", "Third"])
+    .openapi({ example: "First", description: "ステージ" }),
+  score: z
+    .number()
+    .int()
+    .nonnegative()
+    .openapi({ example: 12500, description: "スコア" }),
+});
+
+export const updateTmpScore = z.object({
+  score: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .openapi({ example: 15000, description: "スコア" }),
+});

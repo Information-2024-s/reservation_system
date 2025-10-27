@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum SlotType {
@@ -21,6 +22,12 @@ enum CallStatus {
   NOT_CALLED
   CALLED
   NO_SHOW
+}
+
+enum Stage {
+  First
+  Second
+  Third
 }
 
 model TimeSlot {
@@ -74,4 +81,15 @@ model PlayerScore {
 
   @@index([playerName])
   @@index([team_score_id])
+}
+
+model TmpScore {
+  id        Int
+  stage     Stage
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([id, stage])
+  @@index([stage])
 }
