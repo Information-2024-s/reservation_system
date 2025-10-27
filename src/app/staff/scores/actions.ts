@@ -187,5 +187,6 @@ export async function deletePlayerScore(id: number) {
   }
 
   revalidatePath("/staff/scores");
-  return response.json();
+  // 204 No Content の場合はボディが空なのでJSONをパースしない
+  return response.status === 204 ? null : response.json();
 }
