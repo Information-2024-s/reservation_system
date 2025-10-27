@@ -1,329 +1,354 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { prisma } from '../../../lib/prisma';
-import { teamScore, createTeamScore, updateTeamScore, idParam } from './zod_objects';
-import { authenticateCombined } from './auth-helpers';
-import { z } from 'zod';
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { prisma } from "../../../lib/prisma";
+import {
+  teamScore,
+  createTeamScore,
+  updateTeamScore,
+  idParam,
+} from "./zod_objects";
+import { authenticateCombined } from "./auth-helpers";
+import { z } from "zod";
 
 const app = new OpenAPIHono();
 
 // POST, PATCH, DELETE のみ認証を適用
-app.use('/', async (c, next) => {
-    if (c.req.method !== 'GET') {
-        return authenticateCombined(c, next);
-    }
-    return next();
+app.use("/", async (c, next) => {
+  if (c.req.method !== "GET") {
+    return authenticateCombined(c, next);
+  }
+  return next();
 });
 
-app.use('/:id', async (c, next) => {
-    if (c.req.method !== 'GET') {
-        return authenticateCombined(c, next);
-    }
-    return next();
+app.use("/:id", async (c, next) => {
+  if (c.req.method !== "GET") {
+    return authenticateCombined(c, next);
+  }
+  return next();
 });
 
 // チームスコア一覧取得ルート
 const getTeamScoresRoute = createRoute({
-    path: '/',
-    method: 'get',
-    tags: ['TeamScores'],
-    summary: 'チームスコア一覧を取得',
-    request: {
-        query: z.object({
-            page: z.string().optional().default('1').openapi({ description: 'ページ番号（1から開始）' }),
-            limit: z.string().optional().default('10').openapi({ description: '1ページあたりの件数' }),
-            sortBy: z.enum(['id', 'score', 'createdAt']).optional().default('createdAt').openapi({ description: 'ソート項目' }),
-            sortOrder: z.enum(['asc', 'desc']).optional().default('desc').openapi({ description: 'ソート順' }),
-            headcount: z.string().optional().openapi({ description: 'フィルター: 人数' }),
-        }),
-    },
-    responses: {
-        200: {
-            description: 'OK',
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        data: teamScore.array(),
-                        pagination: z.object({
-                            page: z.number(),
-                            limit: z.number(),
-                            total: z.number(),
-                            totalPages: z.number(),
-                        }),
-                    }),
-                },
-            },
+  path: "/",
+  method: "get",
+  tags: ["TeamScores"],
+  summary: "チームスコア一覧を取得",
+  request: {
+    query: z.object({
+      page: z
+        .string()
+        .optional()
+        .default("1")
+        .openapi({ description: "ページ番号（1から開始）" }),
+      limit: z
+        .string()
+        .optional()
+        .default("10")
+        .openapi({ description: "1ページあたりの件数" }),
+      sortBy: z
+        .enum(["id", "score", "createdAt"])
+        .optional()
+        .default("createdAt")
+        .openapi({ description: "ソート項目" }),
+      sortOrder: z
+        .enum(["asc", "desc"])
+        .optional()
+        .default("desc")
+        .openapi({ description: "ソート順" }),
+      headcount: z
+        .string()
+        .optional()
+        .openapi({ description: "フィルター: 人数" }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "OK",
+      content: {
+        "application/json": {
+          schema: z.object({
+            data: teamScore.array(),
+            pagination: z.object({
+              page: z.number(),
+              limit: z.number(),
+              total: z.number(),
+              totalPages: z.number(),
+            }),
+          }),
         },
+      },
     },
+  },
 });
 
 app.openapi(getTeamScoresRoute, async (c) => {
-    const { page, limit, sortBy, sortOrder, headcount } = c.req.valid('query');
-    
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
+  const { page, limit, sortBy, sortOrder, headcount } = c.req.valid("query");
 
-    // フィルター条件を構築
-    const where: any = {};
-    if (headcount) {
-        where.headcount = parseInt(headcount);
-    }
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
 
-    // ソート条件を構築
-    const orderBy: Partial<Record<'id' | 'score' | 'createdAt', 'asc' | 'desc'>> = {};
-    orderBy[sortBy] = sortOrder;
+  // フィルター条件を構築
+  const where: Record<string, number | undefined> = {};
+  if (headcount) {
+    where.headcount = parseInt(headcount);
+  }
 
-    // 総件数を取得
-    const total = await prisma.teamScore.count({ where });
+  // ソート条件を構築
+  const orderBy: Partial<Record<"id" | "score" | "createdAt", "asc" | "desc">> =
+    {};
+  orderBy[sortBy] = sortOrder;
 
-    // データを取得
-    const teamScores = await prisma.teamScore.findMany({
-        where,
-        include: {
-            playerScores: true,
-        },
-        orderBy,
-        skip,
-        take: limitNum,
-    });
+  // 総件数を取得
+  const total = await prisma.teamScore.count({ where });
 
-    const formattedTeamScores = teamScores.map((teamScore) => ({
-        ...teamScore,
-        createdAt: teamScore.createdAt.toISOString(),
-        updatedAt: teamScore.updatedAt.toISOString(),
-        playerScores: teamScore.playerScores?.map((ps) => ({
-            ...ps,
-            createdAt: ps.createdAt.toISOString(),
-            updatedAt: ps.updatedAt.toISOString(),
-        })),
-    }));
+  // データを取得
+  const teamScores = await prisma.teamScore.findMany({
+    where,
+    include: {
+      playerScores: true,
+    },
+    orderBy,
+    skip,
+    take: limitNum,
+  });
 
-    return c.json({
-        data: formattedTeamScores,
-        pagination: {
-            page: pageNum,
-            limit: limitNum,
-            total,
-            totalPages: Math.ceil(total / limitNum),
-        },
-    });
+  const formattedTeamScores = teamScores.map((teamScore) => ({
+    ...teamScore,
+    createdAt: teamScore.createdAt.toISOString(),
+    updatedAt: teamScore.updatedAt.toISOString(),
+    playerScores: teamScore.playerScores?.map((ps) => ({
+      ...ps,
+      createdAt: ps.createdAt.toISOString(),
+      updatedAt: ps.updatedAt.toISOString(),
+    })),
+  }));
+
+  return c.json({
+    data: formattedTeamScores,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  });
 });
 
 // チームスコア詳細取得ルート
 const getTeamScoreRoute = createRoute({
-    path: '/{id}',
-    method: 'get',
-    tags: ['TeamScores'],
-    summary: 'チームスコア詳細を取得',
-    request: {
-        params: idParam,
-    },
-    responses: {
-        200: {
-            description: 'OK',
-            content: {
-                'application/json': {
-                    schema: teamScore,
-                },
-            },
+  path: "/{id}",
+  method: "get",
+  tags: ["TeamScores"],
+  summary: "チームスコア詳細を取得",
+  request: {
+    params: idParam,
+  },
+  responses: {
+    200: {
+      description: "OK",
+      content: {
+        "application/json": {
+          schema: teamScore,
         },
-        404: {
-            description: 'Not Found',
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        error: z.string(),
-                    }),
-                },
-            },
-        },
+      },
     },
+    404: {
+      description: "Not Found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
 });
 
 app.openapi(getTeamScoreRoute, async (c) => {
-    const { id } = c.req.valid('param');
+  const { id } = c.req.valid("param");
 
-    const teamScoreRecord = await prisma.teamScore.findUnique({
-        where: { id },
-        include: {
-            playerScores: true,
-        },
-    });
+  const teamScoreRecord = await prisma.teamScore.findUnique({
+    where: { id },
+    include: {
+      playerScores: true,
+    },
+  });
 
-    if (!teamScoreRecord) {
-        return c.json({ error: 'チームスコアが見つかりません' }, 404);
-    }
+  if (!teamScoreRecord) {
+    return c.json({ error: "チームスコアが見つかりません" }, 404);
+  }
 
-    const formattedTeamScore = {
-        ...teamScoreRecord,
-        createdAt: teamScoreRecord.createdAt.toISOString(),
-        updatedAt: teamScoreRecord.updatedAt.toISOString(),
-    };
+  const formattedTeamScore = {
+    ...teamScoreRecord,
+    createdAt: teamScoreRecord.createdAt.toISOString(),
+    updatedAt: teamScoreRecord.updatedAt.toISOString(),
+  };
 
-    return c.json(formattedTeamScore, 200);
+  return c.json(formattedTeamScore, 200);
 });
 
 // チームスコア作成ルート
 const createTeamScoreRoute = createRoute({
-    path: '/',
-    method: 'post',
-    tags: ['TeamScores'],
-    summary: 'チームスコアを作成',
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: createTeamScore,
-                },
-            },
+  path: "/",
+  method: "post",
+  tags: ["TeamScores"],
+  summary: "チームスコアを作成",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: createTeamScore,
         },
+      },
     },
-    responses: {
-        201: {
-            description: 'Created',
-            content: {
-                'application/json': {
-                    schema: teamScore,
-                },
-            },
+  },
+  responses: {
+    201: {
+      description: "Created",
+      content: {
+        "application/json": {
+          schema: teamScore,
         },
-        400: {
-            description: 'Bad Request',
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        error: z.string(),
-                    }),
-                },
-            },
-        },
+      },
     },
+    400: {
+      description: "Bad Request",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
 });
 
 app.openapi(createTeamScoreRoute, async (c) => {
-    const data = c.req.valid('json');
+  const data = c.req.valid("json");
 
-    const newTeamScore = await prisma.teamScore.create({
-        data,
-    });
+  const newTeamScore = await prisma.teamScore.create({
+    data,
+  });
 
-    const formattedTeamScore = {
-        ...newTeamScore,
-        createdAt: newTeamScore.createdAt.toISOString(),
-        updatedAt: newTeamScore.updatedAt.toISOString(),
-    };
+  const formattedTeamScore = {
+    ...newTeamScore,
+    createdAt: newTeamScore.createdAt.toISOString(),
+    updatedAt: newTeamScore.updatedAt.toISOString(),
+  };
 
-    return c.json(formattedTeamScore, 201);
+  return c.json(formattedTeamScore, 201);
 });
 
 // チームスコア更新ルート
 const updateTeamScoreRoute = createRoute({
-    path: '/{id}',
-    method: 'patch',
-    tags: ['TeamScores'],
-    summary: 'チームスコアを更新',
-    request: {
-        params: idParam,
-        body: {
-            content: {
-                'application/json': {
-                    schema: updateTeamScore,
-                },
-            },
+  path: "/{id}",
+  method: "patch",
+  tags: ["TeamScores"],
+  summary: "チームスコアを更新",
+  request: {
+    params: idParam,
+    body: {
+      content: {
+        "application/json": {
+          schema: updateTeamScore,
         },
+      },
     },
-    responses: {
-        200: {
-            description: 'OK',
-            content: {
-                'application/json': {
-                    schema: teamScore,
-                },
-            },
+  },
+  responses: {
+    200: {
+      description: "OK",
+      content: {
+        "application/json": {
+          schema: teamScore,
         },
-        404: {
-            description: 'Not Found',
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        error: z.string(),
-                    }),
-                },
-            },
-        },
+      },
     },
+    404: {
+      description: "Not Found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
 });
 
 app.openapi(updateTeamScoreRoute, async (c) => {
-    const { id } = c.req.valid('param');
-    const data = c.req.valid('json');
-    
-    // チームスコアが存在するかチェック
-    const existingTeamScore = await prisma.teamScore.findUnique({
-        where: { id },
-    });
+  const { id } = c.req.valid("param");
+  const data = c.req.valid("json");
 
-    if (!existingTeamScore) {
-        return c.json({ error: 'チームスコアが見つかりません' }, 404);
-    }
+  // チームスコアが存在するかチェック
+  const existingTeamScore = await prisma.teamScore.findUnique({
+    where: { id },
+  });
 
-    const updatedTeamScore = await prisma.teamScore.update({
-        where: { id },
-        data,
-    });
+  if (!existingTeamScore) {
+    return c.json({ error: "チームスコアが見つかりません" }, 404);
+  }
 
-    const formattedTeamScore = {
-        ...updatedTeamScore,
-        createdAt: updatedTeamScore.createdAt.toISOString(),
-        updatedAt: updatedTeamScore.updatedAt.toISOString(),
-    };
+  const updatedTeamScore = await prisma.teamScore.update({
+    where: { id },
+    data,
+  });
 
-    return c.json(formattedTeamScore, 200);
+  const formattedTeamScore = {
+    ...updatedTeamScore,
+    createdAt: updatedTeamScore.createdAt.toISOString(),
+    updatedAt: updatedTeamScore.updatedAt.toISOString(),
+  };
+
+  return c.json(formattedTeamScore, 200);
 });
 
 // チームスコア削除ルート
 const deleteTeamScoreRoute = createRoute({
-    path: '/{id}',
-    method: 'delete',
-    tags: ['TeamScores'],
-    summary: 'チームスコアを削除',
-    request: {
-        params: idParam,
+  path: "/{id}",
+  method: "delete",
+  tags: ["TeamScores"],
+  summary: "チームスコアを削除",
+  request: {
+    params: idParam,
+  },
+  responses: {
+    204: {
+      description: "No Content",
     },
-    responses: {
-        204: {
-            description: 'No Content',
+    404: {
+      description: "Not Found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
         },
-        404: {
-            description: 'Not Found',
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        error: z.string(),
-                    }),
-                },
-            },
-        },
+      },
     },
+  },
 });
 
 app.openapi(deleteTeamScoreRoute, async (c) => {
-    const { id } = c.req.valid('param');
-    
-    // チームスコアが存在するかチェック
-    const existingTeamScore = await prisma.teamScore.findUnique({
-        where: { id },
-    });
+  const { id } = c.req.valid("param");
 
-    if (!existingTeamScore) {
-        return c.json({ error: 'チームスコアが見つかりません' }, 404);
-    }
-    
-    await prisma.teamScore.delete({
-        where: { id },
-    });
-    
-    return c.body(null, 204);
+  // チームスコアが存在するかチェック
+  const existingTeamScore = await prisma.teamScore.findUnique({
+    where: { id },
+  });
+
+  if (!existingTeamScore) {
+    return c.json({ error: "チームスコアが見つかりません" }, 404);
+  }
+
+  await prisma.teamScore.delete({
+    where: { id },
+  });
+
+  return c.body(null, 204);
 });
 
 export default app;

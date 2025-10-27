@@ -7,135 +7,139 @@ import type { Liff } from "@line/liff";
 import { GlobalContext } from "@/contexts/GlobalContexts";
 
 type ReadyPromise = {
-	ready?: Promise<void>;
+  ready?: Promise<void>;
 };
 
 type AppProvidersProps = {
-	children: React.ReactNode;
-	enableLiff?: boolean;
+  children: React.ReactNode;
+  enableLiff?: boolean;
 };
 
 function LiffProvider({ children, enableLiff }: AppProvidersProps) {
-	const [liffObject, setLiffObject] = useState<Liff | null>(null);
-	const [liffError, setLiffError] = useState<string | null>(null);
-	const hasTriedSignInRef = useRef(false);
-	const hasInitializedRef = useRef(false);
-	const { update } = useSession();
+  const [liffObject, setLiffObject] = useState<Liff | null>(null);
+  const [liffError, setLiffError] = useState<string | null>(null);
+  const hasTriedSignInRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+  const { update } = useSession();
 
-	const handleLogout = useCallback(async () => {
-		await signOut({ redirect: false });
+  const handleLogout = useCallback(async () => {
+    await signOut({ redirect: false });
 
-		if (liffObject?.isLoggedIn()) {
-			liffObject.logout();
-		}
+    if (liffObject?.isLoggedIn()) {
+      liffObject.logout();
+    }
 
-		if (typeof window !== "undefined") {
-			window.location.reload();
-		}
-	}, [liffObject]);
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  }, [liffObject]);
 
-	useEffect(() => {
-		if (!enableLiff) {
-			setLiffObject(null);
-			setLiffError(null);
-			return;
-		}
+  useEffect(() => {
+    if (!enableLiff) {
+      setLiffObject(null);
+      setLiffError(null);
+      return;
+    }
 
-		// 既に初期化済みの場合はスキップ
-		if (hasInitializedRef.current) {
-			return;
-		}
+    // 既に初期化済みの場合はスキップ
+    if (hasInitializedRef.current) {
+      return;
+    }
 
-		let isCancelled = false;
+    let isCancelled = false;
 
-		const init = async () => {
-			const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+    const init = async () => {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
 
-			if (!liffId) {
-				console.error("NEXT_PUBLIC_LIFF_ID is not defined.");
-				setLiffError("LIFF IDが設定されていません。管理者に連絡してください。");
-				return;
-			}
+      if (!liffId) {
+        console.error("NEXT_PUBLIC_LIFF_ID is not defined.");
+        setLiffError("LIFF IDが設定されていません。管理者に連絡してください。");
+        return;
+      }
 
-			try {
-				const { default: liff } = await import("@line/liff");
+      try {
+        const { default: liff } = await import("@line/liff");
 
-				// LIFF初期化（既に初期化済みの場合はエラーをキャッチして継続）
-				try {
-					await liff.init({
-						liffId,
-						withLoginOnExternalBrowser: true,
-					});
+        // LIFF初期化（既に初期化済みの場合はエラーをキャッチして継続）
+        try {
+          await liff.init({
+            liffId,
+            withLoginOnExternalBrowser: true,
+          });
 
-					const readyPromise = (liff as ReadyPromise).ready;
-					if (readyPromise && typeof readyPromise.then === "function") {
-						await readyPromise;
-					}
-				} catch (initError) {
-					// 既に初期化済みの場合のエラーは無視
-					if (initError instanceof Error && !initError.message.includes("already initialized")) {
-						throw initError;
-					}
-					console.log("LIFF already initialized, continuing...");
-				}
+          const readyPromise = (liff as ReadyPromise).ready;
+          if (readyPromise && typeof readyPromise.then === "function") {
+            await readyPromise;
+          }
+        } catch (initError) {
+          // 既に初期化済みの場合のエラーは無視
+          if (
+            initError instanceof Error &&
+            !initError.message.includes("already initialized")
+          ) {
+            throw initError;
+          }
+          console.log("LIFF already initialized, continuing...");
+        }
 
-				if (isCancelled) return;
+        if (isCancelled) return;
 
-				hasInitializedRef.current = true;
-				setLiffObject(liff);
-				setLiffError(null);
+        hasInitializedRef.current = true;
+        setLiffObject(liff);
+        setLiffError(null);
 
-				if (liff.isLoggedIn() && !hasTriedSignInRef.current) {
-					const accessToken = liff.getAccessToken();
+        if (liff.isLoggedIn() && !hasTriedSignInRef.current) {
+          const accessToken = liff.getAccessToken();
 
-					if (accessToken) {
-						hasTriedSignInRef.current = true;
-						const result = await signIn("line-liff", {
-							accessToken,
-							redirect: false,
-						});
+          if (accessToken) {
+            hasTriedSignInRef.current = true;
+            const result = await signIn("line-liff", {
+              accessToken,
+              redirect: false,
+            });
 
-						if (result?.error) {
-							console.error("NextAuth sign-in failed:", result.error);
-						} else if (result?.ok) {
-							// セッションを更新してUIに反映
-							await update();
-						}
-					}
-				}
-			} catch (error) {
-				if (isCancelled) return;
-				console.error("LIFF init failed:", error);
-				setLiffError(error instanceof Error ? error.message : String(error));
-			}
-		};
+            if (result?.error) {
+              console.error("NextAuth sign-in failed:", result.error);
+            } else if (result?.ok) {
+              // セッションを更新してUIに反映
+              await update();
+            }
+          }
+        }
+      } catch (error) {
+        if (isCancelled) return;
+        console.error("LIFF init failed:", error);
+        setLiffError(error instanceof Error ? error.message : String(error));
+      }
+    };
 
-		init();
+    init();
 
-		return () => {
-			isCancelled = true;
-		};
-	}, [enableLiff]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [enableLiff, update]);
 
-	return (
-		<GlobalContext.Provider
-			value={{
-				liff: liffObject,
-				liffError,
-				handleLogout,
-			}}
-		>
-			{children}
-		</GlobalContext.Provider>
-	);
+  return (
+    <GlobalContext.Provider
+      value={{
+        liff: liffObject,
+        liffError,
+        handleLogout,
+      }}
+    >
+      {children}
+    </GlobalContext.Provider>
+  );
 }
 
-export function AppProviders({ children, enableLiff = false }: AppProvidersProps) {
-	return (
-		<SessionProvider>
-			<LiffProvider enableLiff={enableLiff}>
-				{children}
-			</LiffProvider>
-		</SessionProvider>
-	);
+export function AppProviders({
+  children,
+  enableLiff = false,
+}: AppProvidersProps) {
+  return (
+    <SessionProvider>
+      <LiffProvider enableLiff={enableLiff}>{children}</LiffProvider>
+    </SessionProvider>
+  );
 }
