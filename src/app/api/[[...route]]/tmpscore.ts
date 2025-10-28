@@ -30,11 +30,30 @@ const getTmpScoresRoute = createRoute({
   summary: "TmpScore 一覧を取得",
   request: {
     query: z.object({
-      stage: z.enum(["First", "Second", "Third"]).optional().openapi({ description: "フィルター: ステージ" }),
-      page: z.string().optional().default("1").openapi({ description: "ページ番号" }),
-      limit: z.string().optional().default("10").openapi({ description: "1ページあたりの件数" }),
-      sortBy: z.enum(["id", "score", "createdAt"]).optional().default("createdAt").openapi({ description: "ソート項目" }),
-      sortOrder: z.enum(["asc", "desc"]).optional().default("desc").openapi({ description: "ソート順" }),
+      stage: z
+        .enum(["First", "Second", "Third"])
+        .optional()
+        .openapi({ description: "フィルター: ステージ" }),
+      page: z
+        .string()
+        .optional()
+        .default("1")
+        .openapi({ description: "ページ番号" }),
+      limit: z
+        .string()
+        .optional()
+        .default("10")
+        .openapi({ description: "1ページあたりの件数" }),
+      sortBy: z
+        .enum(["id", "score", "createdAt"])
+        .optional()
+        .default("createdAt")
+        .openapi({ description: "ソート項目" }),
+      sortOrder: z
+        .enum(["asc", "desc"])
+        .optional()
+        .default("desc")
+        .openapi({ description: "ソート順" }),
     }),
   },
   responses: {
@@ -66,7 +85,12 @@ app.openapi(getTmpScoresRoute, async (c) => {
   const orderBy: Record<string, "asc" | "desc"> = {};
   orderBy[sortBy] = sortOrder as "asc" | "desc";
   const total = await prisma.tmpScore.count({ where });
-  const data = await prisma.tmpScore.findMany({ where, orderBy, skip, take: limitNum });
+  const data = await prisma.tmpScore.findMany({
+    where,
+    orderBy,
+    skip,
+    take: limitNum,
+  });
   return c.json(
     {
       data: data.map((item) => ({
@@ -93,8 +117,14 @@ const getTmpScoreRoute = createRoute({
   summary: "TmpScore を ID とステージで取得",
   request: {
     params: z.object({
-      id: z.coerce.number().int().positive().openapi({ example: 1, description: "ID" }),
-      stage: z.enum(["First", "Second", "Third"]).openapi({ example: "First", description: "ステージ" }),
+      id: z.coerce
+        .number()
+        .int()
+        .positive()
+        .openapi({ example: 1, description: "ID" }),
+      stage: z
+        .enum(["First", "Second", "Third"])
+        .openapi({ example: "First", description: "ステージ" }),
     }),
   },
   responses: {
@@ -206,8 +236,14 @@ const updateTmpScoreRoute = createRoute({
   summary: "TmpScore を更新",
   request: {
     params: z.object({
-      id: z.coerce.number().int().positive().openapi({ example: 1, description: "ID" }),
-      stage: z.enum(["First", "Second", "Third"]).openapi({ example: "First", description: "ステージ" }),
+      id: z.coerce
+        .number()
+        .int()
+        .positive()
+        .openapi({ example: 1, description: "ID" }),
+      stage: z
+        .enum(["First", "Second", "Third"])
+        .openapi({ example: "First", description: "ステージ" }),
     }),
     body: {
       content: {
@@ -268,8 +304,14 @@ const deleteTmpScoreRoute = createRoute({
   summary: "TmpScore を削除",
   request: {
     params: z.object({
-      id: z.coerce.number().int().positive().openapi({ example: 1, description: "ID" }),
-      stage: z.enum(["First", "Second", "Third"]).openapi({ example: "First", description: "ステージ" }),
+      id: z.coerce
+        .number()
+        .int()
+        .positive()
+        .openapi({ example: 1, description: "ID" }),
+      stage: z
+        .enum(["First", "Second", "Third"])
+        .openapi({ example: "First", description: "ステージ" }),
     }),
   },
   responses: {

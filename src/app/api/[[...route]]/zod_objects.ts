@@ -48,7 +48,10 @@ export const updateTeam = z.object({
   memberNames: z
     .array(z.string())
     .optional()
-    .openapi({ example: ["田中太郎", "佐藤花子"], description: "メンバー名のリスト" }),
+    .openapi({
+      example: ["田中太郎", "佐藤花子"],
+      description: "メンバー名のリスト",
+    }),
 });
 
 // User Zod Object
@@ -172,9 +175,7 @@ export const teamScore = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "チームスコアID" }),
-  teamName: z
-    .string()
-    .openapi({ example: "チームA", description: "チーム名" }),
+  teamName: z.string().openapi({ example: "チームA", description: "チーム名" }),
   headcount: z
     .number()
     .int()
@@ -195,9 +196,7 @@ export const teamScore = z.object({
 });
 
 export const createTeamScore = z.object({
-  teamName: z
-    .string()
-    .openapi({ example: "チームA", description: "チーム名" }),
+  teamName: z.string().openapi({ example: "チームA", description: "チーム名" }),
   headcount: z
     .number()
     .int()
@@ -289,7 +288,10 @@ export const player = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "プレイヤーID" }),
-  name: z.string().nullable().openapi({ example: "太郎", description: "プレイヤー名" }),
+  name: z
+    .string()
+    .nullable()
+    .openapi({ example: "太郎", description: "プレイヤー名" }),
   team_id: z
     .number()
     .int()
@@ -305,7 +307,10 @@ export const player = z.object({
 });
 
 export const createPlayer = z.object({
-  name: z.string().optional().openapi({ example: "太郎", description: "プレイヤー名" }),
+  name: z
+    .string()
+    .optional()
+    .openapi({ example: "太郎", description: "プレイヤー名" }),
   team_id: z
     .number()
     .int()
@@ -315,7 +320,10 @@ export const createPlayer = z.object({
 });
 
 export const updatePlayer = z.object({
-  name: z.string().optional().openapi({ example: "花子", description: "プレイヤー名" }),
+  name: z
+    .string()
+    .optional()
+    .openapi({ example: "花子", description: "プレイヤー名" }),
 });
 
 // Legacy Score for backward compatibility
@@ -330,9 +338,7 @@ export const reservation = z.object({
     .int()
     .positive()
     .openapi({ example: 1, description: "予約ID" }),
-  name: z
-    .string()
-    .openapi({ example: "山田太郎", description: "予約者名" }),
+  name: z.string().openapi({ example: "山田太郎", description: "予約者名" }),
   lineUserId: z.string().nullable().openapi({
     example: "clig1h2k40000qn8l4g4l4g4l",
     description: "LINE ユーザーID",
@@ -356,16 +362,20 @@ export const reservation = z.object({
 
 // TimeSlot情報を含む予約レスポンス用スキーマ
 export const reservationWithTimeSlot = reservation.extend({
-  timeSlot: z.object({
-    id: z.number().int().positive(),
-    slotTime: z.string(),
-    slotType: z.enum(["RESERVABLE", "WALK_IN"]),
-    status: z.enum(["AVAILABLE", "BOOKED"]),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  }).nullable().optional().openapi({
-    description: "関連するタイムスロット情報"
-  }),
+  timeSlot: z
+    .object({
+      id: z.number().int().positive(),
+      slotTime: z.string(),
+      slotType: z.enum(["RESERVABLE", "WALK_IN"]),
+      status: z.enum(["AVAILABLE", "BOOKED"]),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    })
+    .nullable()
+    .optional()
+    .openapi({
+      description: "関連するタイムスロット情報",
+    }),
 });
 
 export const createReservation = z.object({
@@ -514,11 +524,7 @@ export const errorResponse = z.object({
 
 // TmpScore Zod Object
 export const tmpScore = z.object({
-  id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "ID" }),
+  id: z.number().int().positive().openapi({ example: 1, description: "ID" }),
   stage: z
     .enum(["First", "Second", "Third"])
     .openapi({ example: "First", description: "ステージ" }),
@@ -538,11 +544,7 @@ export const tmpScore = z.object({
 });
 
 export const createTmpScore = z.object({
-  id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "ID" }),
+  id: z.number().int().positive().openapi({ example: 1, description: "ID" }),
   stage: z
     .enum(["First", "Second", "Third"])
     .openapi({ example: "First", description: "ステージ" }),

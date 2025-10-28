@@ -1,45 +1,41 @@
-import { handle } from 'hono/vercel'
-import { OpenAPIHono } from '@hono/zod-openapi';
-import { swaggerUI } from '@hono/swagger-ui';
-import reservation from './reservation'
-import timeslot from './timeslot'
-import teamscore from './teamscore'
-import playerscore from './playerscore'
-import tmpscore from './tmpscore'
-import line from './line'
+import { handle } from "hono/vercel";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
+import reservation from "./reservation";
+import timeslot from "./timeslot";
+import teamscore from "./teamscore";
+import playerscore from "./playerscore";
+import tmpscore from "./tmpscore";
+import line from "./line";
 
-const app = new OpenAPIHono().basePath('/api');
+const app = new OpenAPIHono().basePath("/api");
 
 // API Key認証スキームを登録
-app.openAPIRegistry.registerComponent('securitySchemes', 'ApiKey', {
-  type: 'apiKey',
-  in: 'header',        // または 'query', 'cookie'
-  name: 'X-API-Key'    // ヘッダー名
-})
+app.openAPIRegistry.registerComponent("securitySchemes", "ApiKey", {
+  type: "apiKey",
+  in: "header", // または 'query', 'cookie'
+  name: "X-API-Key", // ヘッダー名
+});
 
 // Basic認証付きの/specificationエンドポイントを作成
-app.get('/specification', 
-  (c) => {
-    const spec = app.getOpenAPIDocument({
-      openapi: '3.0.0',
-      info: {
-        title: 'Reservation System API',
-        version: '1.0.0',
-        description: 'API for managing reservations and scores',
-      },
-    });
-    return c.json(spec);
-  }
-);
+app.get("/specification", (c) => {
+  const spec = app.getOpenAPIDocument({
+    openapi: "3.0.0",
+    info: {
+      title: "Reservation System API",
+      version: "1.0.0",
+      description: "API for managing reservations and scores",
+    },
+  });
+  return c.json(spec);
+});
 
-app.get('/doc', 
+app.get(
+  "/doc",
   swaggerUI({
-    url: '/api/specification',
+    url: "/api/specification",
   })
 );
-
-
-
 
 // API routes
 app.route("/reservations", reservation);
@@ -49,20 +45,17 @@ app.route("/playerscores", playerscore);
 app.route("/tmpscores", tmpscore);
 app.route("/line", line);
 app.onError((err, c) => {
-  return c.json({ error: err.message }, 500)
-})
+  return c.json({ error: err.message }, 500);
+});
 app.onError((err, c) => {
-  return c.json({ error: err.message }, 500)
-})
-
-
+  return c.json({ error: err.message }, 500);
+});
 
 // routesの型を取り、exportしておく
-export type AppType = typeof app
+export type AppType = typeof app;
 
-export const GET = handle(app)
-export const POST = handle(app)
-export const PATCH = handle(app)
-export const DELETE = handle(app)
-export const PUT = handle(app)
-
+export const GET = handle(app);
+export const POST = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
+export const PUT = handle(app);

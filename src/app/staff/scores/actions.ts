@@ -190,3 +190,28 @@ export async function deletePlayerScore(id: number) {
   // 204 No Content の場合はボディが空なのでJSONをパースしない
   return response.status === 204 ? null : response.json();
 }
+
+// TmpScoreから指定IDのスコアを取得（全ステージ合計）
+export async function getTmpScoreTotalByUserId(userId: number): Promise<number> {
+  const stages = ["First", "Second", "Third"];
+  let totalScore = 0;
+
+  for (const stage of stages) {
+    try {
+      const response = await fetch(`${API_URL}/api/tmpscores/${userId}/${stage}`, {
+        headers,
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        totalScore += data.score || 0;
+      }
+    } catch (error) {
+      // スコアが存在しない場合はスキップ
+      console.debug(`TmpScore not found for id ${userId} stage ${stage}`);
+    }
+  }
+
+  return totalScore;
+}

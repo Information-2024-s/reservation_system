@@ -12,6 +12,7 @@ import {
   createPlayerScore,
   updatePlayerScore,
   deletePlayerScore,
+  getTmpScoreTotalByUserId,
 } from "./actions";
 
 interface PlayerScore {
@@ -83,6 +84,10 @@ export default function ScoreManagement() {
     description: "",
     score: 0,
   });
+
+  // TmpScore ID（スコア自動埋め用）
+  const [tmpScoreUserId, setTmpScoreUserId] = useState<string>("");
+  const [isLoadingTmpScore, setIsLoadingTmpScore] = useState(false);
 
   // ソート処理
   const handleTeamSort = (field: SortField) => {
@@ -337,6 +342,7 @@ export default function ScoreManagement() {
       score: 0,
     });
     setModalPlayers([]);
+    setTmpScoreUserId("");
     setIsModalOpen(true);
   };
 
@@ -352,6 +358,7 @@ export default function ScoreManagement() {
     setModalPlayers(
       team.playerScores?.map(p => ({ id: p.id, playerName: p.playerName, score: p.score })) || []
     );
+    setTmpScoreUserId("");
     setIsModalOpen(true);
   };
 
@@ -360,6 +367,7 @@ export default function ScoreManagement() {
     setIsModalOpen(false);
     setEditingTeam(null);
     setModalPlayers([]);
+    setTmpScoreUserId("");
   };
 
   // プレイヤーを追加
@@ -377,6 +385,45 @@ export default function ScoreManagement() {
     const updated = [...modalPlayers];
     updated[index] = { ...updated[index], [field]: value };
     setModalPlayers(updated);
+  };
+
+  // TmpScore IDからスコアを取得してプレイヤーとして追加
+  const handleLoadTmpScore = async () => {
+    if (!tmpScoreUserId.trim()) {
+      setError("ユーザーIDを入力してください");
+      return;
+    }
+
+    const userId = parseInt(tmpScoreUserId);
+    if (isNaN(userId)) {
+      setError("有効なユーザーIDを入力してください");
+      return;
+    }
+
+    setIsLoadingTmpScore(true);
+    setError(null);
+    try {
+      const totalScore = await getTmpScoreTotalByUserId(userId);
+      
+      if (totalScore === 0) {
+        setError(`ユーザーID ${userId} のスコアが見つかりません`);
+      } else {
+        // プレイヤーとして追加
+        const playerName = `ユーザーID: ${userId}`;
+        setModalPlayers(prev => [
+          ...prev,
+          { playerName, score: totalScore }
+        ]);
+        // 成功メッセージ
+        alert(`プレイヤー「${playerName}」を追加しました（スコア: ${totalScore}）`);
+        // TmpScore IDフィールドをクリア
+        setTmpScoreUserId("");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "スコア取得に失敗しました");
+    } finally {
+      setIsLoadingTmpScore(false);
+    }
   };
 
   // チームスコア作成・更新（プレイヤー込み）
@@ -764,20 +811,19 @@ export default function ScoreManagement() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
                         title="プレイヤー数から自動計算されます"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        スコア <span className="text-gray-500 text-xs">(自動計算)</span>
-                      </label>
-                      <input
-                        type="number"
-                        required
-                        value={teamForm.score}
-                        readOnly
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                        title="プレイヤースコアの合計から自動計算されます"
-                      />
-                    </div>
+                    </div>                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      スコア <span className="text-gray-500 text-xs">(自動計算)</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={teamForm.score}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+                      title="プレイヤースコアの合計から自動計算されます"
+                    />
+                  </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">説明</label>
@@ -787,6 +833,37 @@ export default function ScoreManagement() {
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                  </div>
+                </div>
+
+                {/* TmpScoreからのスコア自動読込 */}
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg space-y-4">
+                  <h3 className="font-bold text-lg text-gray-900">TmpScoreからのスコア読込</h3>
+                  <p className="text-sm text-gray-700">
+                    ユーザーIDを入力して、TmpScoreのスコア（First/Second/Third の合計）を<strong>プレイヤーとして追加</strong>できます。
+                  </p>
+                  <div className="flex gap-3 items-end">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        ユーザーID
+                      </label>
+                      <input
+                        type="number"
+                        value={tmpScoreUserId}
+                        onChange={(e) => setTmpScoreUserId(e.target.value)}
+                        placeholder="例: 1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isLoadingTmpScore}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLoadTmpScore}
+                      disabled={isLoadingTmpScore || !tmpScoreUserId.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {isLoadingTmpScore ? "読込中..." : "スコアを読込"}
+                    </button>
                   </div>
                 </div>
 
