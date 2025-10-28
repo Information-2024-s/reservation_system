@@ -82,6 +82,9 @@ export default function ScoreManagement() {
   const [playerSortDirection, setPlayerSortDirection] =
     useState<SortDirection>("desc");
 
+  // フィルタ状態
+  const [headcountFilter, setHeadcountFilter] = useState<number | "all">("all");
+
   // チームスコアフォーム
   const [teamForm, setTeamForm] = useState({
     teamName: "",
@@ -123,6 +126,7 @@ export default function ScoreManagement() {
         limit: teamPagination.limit,
         sortBy: teamSortField,
         sortOrder: teamSortDirection,
+        headcount: headcountFilter === "all" ? undefined : headcountFilter,
       });
 
       setTeamScores(result.data);
@@ -159,7 +163,7 @@ export default function ScoreManagement() {
     fetchPlayerScores();
   };
 
-  // データ取得（初回とソート・ページ変更時）
+  // データ取得（初回とソート・ページ・フィルタ変更時）
   useEffect(() => {
     fetchTeamScores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,6 +172,7 @@ export default function ScoreManagement() {
     teamPagination.limit,
     teamSortField,
     teamSortDirection,
+    headcountFilter,
   ]);
 
   useEffect(() => {
@@ -428,37 +433,63 @@ export default function ScoreManagement() {
     setModalPlayers(updated);
   };
 
-  // TmpScore IDからスコアを取得してプレイヤーとして追加
+  // TmpScore IDからスコアを取得してプレイヤーとして追加（複数ID対応）
   const handleLoadTmpScore = async () => {
     if (!tmpScoreUserId.trim()) {
       setError("ユーザーIDを入力してください");
       return;
     }
 
-    const userId = parseInt(tmpScoreUserId);
-    if (isNaN(userId)) {
+    // カンマ、スペース、改行などで区切られた複数IDをパース
+    const userIds = tmpScoreUserId
+      .split(/[,\s\n]+/)
+      .map((id) => id.trim())
+      .filter((id) => id)
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+
+    if (userIds.length === 0) {
       setError("有効なユーザーIDを入力してください");
       return;
     }
 
     setIsLoadingTmpScore(true);
     setError(null);
-    try {
-      const totalScore = await getTmpScoreTotalByUserId(userId);
+    
+    const addedPlayers: { playerName: string; score: number }[] = [];
+    const failedIds: number[] = [];
 
-      if (totalScore === 0) {
-        setError(`ユーザーID ${userId} のスコアが見つかりません`);
-      } else {
-        // プレイヤーとして追加
-        const playerName = `ユーザーID: ${userId}`;
-        setModalPlayers((prev) => [...prev, { playerName, score: totalScore }]);
-        // 成功メッセージ
-        alert(
-          `プレイヤー「${playerName}」を追加しました（スコア: ${totalScore}）`
-        );
-        // TmpScore IDフィールドをクリア
-        setTmpScoreUserId("");
+    try {
+      // 各IDについてスコアを取得
+      for (const userId of userIds) {
+        try {
+          const totalScore = await getTmpScoreTotalByUserId(userId);
+
+          if (totalScore === 0) {
+            failedIds.push(userId);
+          } else {
+            const playerName = `ユーザーID: ${userId}`;
+            addedPlayers.push({ playerName, score: totalScore });
+          }
+        } catch (err) {
+          failedIds.push(userId);
+        }
       }
+
+      // 成功したプレイヤーを追加
+      if (addedPlayers.length > 0) {
+        setModalPlayers((prev) => [...prev, ...addedPlayers]);
+      }
+
+      // エラーメッセージの設定
+      if (failedIds.length > 0) {
+        setError(
+          `以下のユーザーIDのスコアが見つかりませんでした: ${failedIds.join(", ")}`
+        );
+      }
+
+      // IDフィールドをクリア
+      setTmpScoreUserId("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "スコア取得に失敗しました");
     } finally {
@@ -644,13 +675,36 @@ export default function ScoreManagement() {
               <h3 className="text-lg font-bold text-gray-900">
                 チームスコア一覧
               </h3>
-              <button
-                onClick={fetchTeamScores}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? "更新中..." : "更新"}
-              </button>
+              <div className="flex items-center gap-4">
+                {/* 人数フィルタ */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    人数:
+                  </label>
+                  <select
+                    value={headcountFilter}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setHeadcountFilter(value === "all" ? "all" : parseInt(value));
+                      setTeamPagination({ ...teamPagination, page: 1 }); // ページを1にリセット
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">すべて</option>
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                  </select>
+                </div>
+                <button
+                  onClick={fetchTeamScores}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "更新中..." : "更新"}
+                </button>
+              </div>
             </div>
             {teamScores.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
@@ -979,17 +1033,19 @@ export default function ScoreManagement() {
                   <p className="text-sm text-gray-700">
                     ユーザーIDを入力して、TmpScoreのスコア（First/Second/Third
                     の合計）を<strong>プレイヤーとして追加</strong>できます。
+                    <br />
+                    <strong>複数のIDを一度に入力する場合は、カンマやスペースで区切ってください。</strong>
                   </p>
                   <div className="flex gap-3 items-end">
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ユーザーID
+                        ユーザーID（複数可）
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         value={tmpScoreUserId}
                         onChange={(e) => setTmpScoreUserId(e.target.value)}
-                        placeholder="例: 1"
+                        placeholder="例: 1, 2, 3 または 1 2 3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         disabled={isLoadingTmpScore}
                       />

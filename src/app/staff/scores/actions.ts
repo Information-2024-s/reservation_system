@@ -20,12 +20,14 @@ export async function getTeamScores(params: {
   limit?: number;
   sortBy?: "id" | "score" | "createdAt";
   sortOrder?: "asc" | "desc";
+  headcount?: number;
 }) {
   const {
     page = 1,
     limit = 10,
     sortBy = "createdAt",
     sortOrder = "desc",
+    headcount,
   } = params;
 
   const queryParams = new URLSearchParams({
@@ -34,6 +36,11 @@ export async function getTeamScores(params: {
     sortBy,
     sortOrder,
   });
+
+  // headcountが指定されている場合のみクエリに追加
+  if (headcount !== undefined) {
+    queryParams.append("headcount", headcount.toString());
+  }
 
   const response = await fetch(`${API_URL}/api/teamscores?${queryParams}`, {
     headers,

@@ -19,6 +19,26 @@
   src: url("/assets/font/Makinas-4-Square.woff") format("woff");
 }
 
+/* ===== フォント適用 ===== */
+/* ランキングページ全体にフォントを適用 */
+.ranking-page {
+  font-family: "SmartFontUI", "SourceHanSansJP", sans-serif;
+}
+
+/* 見出しやタイトルには MakinasSquare を適用 */
+.ranking-page h1,
+.ranking-page h2,
+.ranking-page h3,
+.ranking-page .font-title {
+  font-family: "MakinasSquare", "Makinas", sans-serif;
+}
+
+/* 数字には Makinas を適用（スコア表示など） */
+.ranking-page .score-number,
+.ranking-page .rank-number {
+  font-family: "Makinas", monospace;
+}
+
 /* グリッド背景 */
 .ranking-page::before {
   content: "";

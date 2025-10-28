@@ -43,11 +43,54 @@ function RankingContent() {
   const [activeTab, setActiveTab] = useState<
     "team1" | "team2" | "team3" | "team4"
   >("team1");
+  const [itemsToFetch, setItemsToFetch] = useState(50); // 取得する項目数
 
   // クエリパラメータから設定を取得
   const autoSwitch = searchParams.get("auto") === "true"; // デフォルトfalse
   const intervalSeconds = parseInt(searchParams.get("interval") || "10", 10); // デフォルト10秒
   const refreshInterval = parseInt(searchParams.get("refresh") || "30", 10); // データ再取得間隔(秒)、デフォルト30秒
+
+  // 画面の高さに基づいて表示可能な項目数を計算
+  useEffect(() => {
+    const calculateItemsToShow = () => {
+      const windowHeight = window.innerHeight;
+      
+      // より正確な計算のため、実際の固定要素の高さを考慮
+      // タイトル部分
+      const titleHeight = 140;
+      // タブ部分
+      const tabHeight = 80;
+      // テーブルヘッダー
+      const tableHeaderHeight = 50;
+      // 統計情報
+      const statsHeight = 180;
+      // 上下のパディング
+      const paddingHeight = 100;
+      
+      const headerFooterHeight = titleHeight + tabHeight + tableHeaderHeight + statsHeight + paddingHeight;
+      const availableHeight = windowHeight - headerFooterHeight;
+      
+      // テーブル行の高さ（実測に基づく）
+      // px-5 py-4 なので、縦方向パディングは約32px、コンテンツ約30px = 約62px
+      const rowHeight = 62;
+      
+      const itemsPerScreen = Math.floor(availableHeight / rowHeight);
+      
+      // グループ化しないため、表示件数 = 取得件数
+      // 少し余裕を持たせて計算結果に+5件（最低20件、最大200件）
+      const itemsCount = Math.max(20, Math.min(itemsPerScreen + 5, 200));
+      
+      console.log(`[Height Calculation] Window: ${windowHeight}px, Header/Footer: ${headerFooterHeight}px, Available: ${availableHeight}px, Row: ${rowHeight}px, Items to fetch: ${itemsCount}`);
+      setItemsToFetch(itemsCount);
+    };
+
+    // 初回計算（少し遅延させてDOMが構築されてから実行）
+    setTimeout(calculateItemsToShow, 100);
+
+    // ウィンドウのリサイズ時に再計算
+    window.addEventListener("resize", calculateItemsToShow);
+    return () => window.removeEventListener("resize", calculateItemsToShow);
+  }, []);
 
   // 自動タブ切り替え
   useEffect(() => {
@@ -76,12 +119,12 @@ function RankingContent() {
   const fetchTabData = async (tab: "team1" | "team2" | "team3" | "team4") => {
     try {
       setLoading(true);
-      console.log(`Fetching data for tab: ${tab}`);
+      console.log(`Fetching data for tab: ${tab}, limit: ${itemsToFetch}`);
 
       const headcount = parseInt(tab.replace("team", ""));
       // キャッシュを無効化するため、タイムスタンプをクエリパラメータに追加
       const response = await fetch(
-        `/api/teamscores?headcount=${headcount}&limit=100&sortBy=score&sortOrder=desc&_t=${Date.now()}`,
+        `/api/teamscores?headcount=${headcount}&limit=${itemsToFetch}&sortBy=score&sortOrder=desc&_t=${Date.now()}`,
         { cache: "no-store" }
       );
 
@@ -121,13 +164,17 @@ function RankingContent() {
     }
   };
 
-  // 初回マウント時とactiveTabが変更されたときにデータを取得
+  // 初回マウント時とactiveTabが変更されたとき、itemsToFetchが変更されたときにデータを取得
   useEffect(() => {
-    fetchTabData(activeTab);
-  }, [activeTab]);
+    if (itemsToFetch > 0) {
+      fetchTabData(activeTab);
+    }
+  }, [activeTab, itemsToFetch]);
 
   // 定期的にデータを再取得(ディスプレイ常時表示用)
   useEffect(() => {
+    if (itemsToFetch === 0) return; // まだ計算されていない場合はスキップ
+    
     const REFRESH_INTERVAL = refreshInterval * 1000; // 秒をミリ秒に変換
 
     const interval = setInterval(() => {
@@ -136,7 +183,7 @@ function RankingContent() {
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [activeTab, refreshInterval]);
+  }, [activeTab, refreshInterval, itemsToFetch]);
 
   // プレイヤースコアも定期的に更新（全タブで共通）
   useEffect(() => {
@@ -181,10 +228,8 @@ function RankingContent() {
     return () => clearInterval(interval);
   }, [refreshInterval]);
 
-  // チーム人数別にスコアを集計してランキング作成
+  // チーム人数別にスコアをランキング表示（グループ化なし）
   const getTeamRankings = (headcount: number): TeamRanking[] => {
-    const teamMap = new Map<string, TeamRanking>();
-
     // 人数に応じて適切なステートを選択
     const scores =
       headcount === 1
@@ -197,28 +242,37 @@ function RankingContent() {
         ? team4Scores
         : [];
 
-    scores.forEach((score) => {
-      const key = score.teamName;
-      const existing = teamMap.get(key);
-      if (existing) {
-        existing.totalScore += score.score;
-        existing.count += 1;
-      } else {
-        teamMap.set(key, {
-          teamName: score.teamName,
-          headcount: score.headcount,
-          totalScore: score.score,
-          count: 1,
-        });
-      }
-    });
-
-    return Array.from(teamMap.values()).sort(
-      (a, b) => b.totalScore - a.totalScore
-    );
+    // グループ化せず、各スコアをそのまま表示用の形式に変換
+    return scores.map((score) => ({
+      teamName: score.teamName,
+      headcount: score.headcount,
+      totalScore: score.score,
+      count: 1,
+    })).sort((a, b) => b.totalScore - a.totalScore);
   };
 
   const renderTeamRankings = (headcount: number) => {
+    // ローディング中の表示
+    if (loading) {
+      return (
+        <div className="text-center py-16">
+          <div
+            className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-transparent mx-auto"
+            style={{
+              borderTopColor: "#4a90e2",
+              borderRightColor: "#4a90e2",
+            }}
+          />
+          <p
+            className="mt-4 text-[#e0f0ff] text-base font-semibold tracking-wider uppercase"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            LOADING...
+          </p>
+        </div>
+      );
+    }
+
     const rankings = getTeamRankings(headcount);
 
     if (rankings.length === 0) {
@@ -284,7 +338,7 @@ function RankingContent() {
                 <td className="px-5 py-4 align-middle">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`w-10 h-10 rounded-lg grid place-items-center text-sm font-semibold tracking-wider uppercase transition-all duration-250 ${
+                      className={`rank-number w-10 h-10 rounded-lg grid place-items-center text-sm font-semibold tracking-wider uppercase transition-all duration-250 ${
                         index === 0
                           ? "bg-gradient-to-b from-[rgba(60,50,20,0.85)] to-[rgba(25,20,5,0.95)] text-[#fff7d1] border-[rgba(255,230,150,0.45)]"
                           : index === 1
@@ -314,7 +368,7 @@ function RankingContent() {
                   {ranking.teamName}
                 </td>
                 <td
-                  className="px-5 py-4 text-right font-bold text-white text-base align-middle"
+                  className="score-number px-5 py-4 text-right font-bold text-white text-base align-middle"
                   style={{ textShadow: "0 0 8px rgba(74, 144, 226, 0.3)" }}
                 >
                   {ranking.totalScore.toLocaleString()}
@@ -326,29 +380,6 @@ function RankingContent() {
       </div>
     );
   };
-
-  if (loading) {
-    return (
-      <div className="ranking-page min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] relative">
-        <TerminalBackground />
-        <div className="text-center relative z-10">
-          <div
-            className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-transparent"
-            style={{
-              borderTopColor: "#4a90e2",
-              borderRightColor: "#4a90e2",
-            }}
-          />
-          <p
-            className="mt-6 text-[#e0f0ff] text-lg font-semibold tracking-wider uppercase"
-            style={{ letterSpacing: "0.08em" }}
-          >
-            LOADING...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -394,9 +425,8 @@ function RankingContent() {
         {/* タイトル */}
         <header className="text-center mb-6">
           <h1
-            className="text-5xl md:text-6xl font-extrabold text-[#e0f0ff] uppercase tracking-wider"
+            className="font-title text-5xl md:text-6xl font-extrabold text-[#e0f0ff] uppercase tracking-wider"
             style={{
-              fontFamily: "system-ui, sans-serif",
               textShadow:
                 "0 0 4px rgba(224, 240, 255, 0.6), 0 0 8px rgba(224, 240, 255, 0.5), 0 0 12px rgba(74, 144, 226, 0.5), 0 0 18px rgba(74, 144, 226, 0.4), 0 0 24px rgba(74, 144, 226, 0.3)",
               lineHeight: 1.2,
@@ -556,7 +586,7 @@ function RankingContent() {
                 TEAM SCORES
               </div>
               <div
-                className="text-5xl font-extrabold text-white leading-none"
+                className="score-number text-5xl font-extrabold text-white leading-none"
                 style={{ textShadow: "0 0 10px rgba(74, 144, 226, 0.3)" }}
               >
                 {team1Scores.length +
@@ -593,7 +623,7 @@ function RankingContent() {
                 PLAYER SCORES
               </div>
               <div
-                className="text-5xl font-extrabold text-white leading-none"
+                className="score-number text-5xl font-extrabold text-white leading-none"
                 style={{ textShadow: "0 0 10px rgba(74, 144, 226, 0.3)" }}
               >
                 {playerScores.length}
