@@ -1,3 +1,24 @@
+/* ===== フォント設定 ===== */
+@font-face {
+  font-family: "MakinasSquare";
+  src: url("/assets/font/Makinas-4-Square.woff") format("woff");
+}
+
+@font-face {
+  font-family: "SourceHanSansJP";
+  src: url("/assets/font/SourceHanSansJP-Medium.woff") format("woff");
+}
+
+@font-face {
+  font-family: "SmartFontUI";
+  src: url("/assets/font/SmartFontUI.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Makinas";
+  src: url("/assets/font/Makinas-4-Square.woff") format("woff");
+}
+
 /* グリッド背景 */
 .ranking-page::before {
   content: "";

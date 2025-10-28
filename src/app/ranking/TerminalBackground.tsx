@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface Command {
-  type: 'normal' | 'progress';
+  type: "normal" | "progress";
   text: string;
   outputClass?: string;
   duration?: number;
@@ -22,22 +22,22 @@ const TERMINAL_CONFIG = {
   BAR_LENGTH: 20,
   DEFAULT_PROGRESS_STEPS: 20,
   DEFAULT_PROGRESS_DURATION: 2000,
-  COMMANDS_JSON_PATH: '/assets/data/commands.json',
+  COMMANDS_JSON_PATH: "/assets/data/commands.json",
 };
 
 const PROGRESS_BAR_DESIGNS = [
   (step: number, total: number, barLength: number) => {
     const filled = Math.round((step / total) * barLength);
     const percent = Math.round((step / total) * 100);
-    const done = '='.repeat(filled);
-    const remaining = ' '.repeat(barLength - filled);
+    const done = "=".repeat(filled);
+    const remaining = " ".repeat(barLength - filled);
     return `${step}/${total} [${done}${remaining}] ${percent}% Completed | 00:01:20 remaining`;
   },
   (step: number, total: number, barLength: number) => {
     const filled = Math.round((step / total) * barLength);
     const percent = Math.round((step / total) * 100);
-    const done = '█'.repeat(filled);
-    const remaining = '-'.repeat(barLength - filled);
+    const done = "█".repeat(filled);
+    const remaining = "-".repeat(barLength - filled);
     const speed = (Math.random() * 2 + 0.5).toFixed(1);
     const fileNum = Math.floor(Math.random() * 100);
     return `Downloading file_${fileNum}.zip [${done}${remaining}] ${percent}% ${speed}MB/s ETA: 00:01:10`;
@@ -45,8 +45,8 @@ const PROGRESS_BAR_DESIGNS = [
   (step: number, total: number, barLength: number) => {
     const filled = Math.round((step / total) * barLength);
     const percent = Math.round((step / total) * 100);
-    const done = '#'.repeat(filled);
-    const remaining = '-'.repeat(barLength - filled);
+    const done = "#".repeat(filled);
+    const remaining = "-".repeat(barLength - filled);
     const progress = Math.floor((step / total) * 500);
     return `${progress}/500 [${done}${remaining}] ${percent}% ETA: 00:01:30`;
   },
@@ -82,7 +82,7 @@ class TerminalEmulator {
 
       this.init();
     } catch (error) {
-      console.error('Error loading terminal commands:', error);
+      console.error("Error loading terminal commands:", error);
       this.commands = [];
       this.dummyLines = [];
     }
@@ -99,8 +99,8 @@ class TerminalEmulator {
       this.lastActivity = Date.now();
     };
 
-    document.addEventListener('mousemove', updateActivity);
-    document.addEventListener('keydown', updateActivity);
+    document.addEventListener("mousemove", updateActivity);
+    document.addEventListener("keydown", updateActivity);
   }
 
   isIdle() {
@@ -109,22 +109,22 @@ class TerminalEmulator {
 
   getRandomDummyLine() {
     if (this.dummyLines.length === 0) {
-      return 'system.initialize()';
+      return "system.initialize()";
     }
     return this.dummyLines[Math.floor(Math.random() * this.dummyLines.length)];
   }
 
   renderInitialDummyLines() {
     for (let i = 0; i < TERMINAL_CONFIG.MAX_LINES; i++) {
-      const dummyLine = document.createElement('div');
-      dummyLine.classList.add('terminal-output');
+      const dummyLine = document.createElement("div");
+      dummyLine.classList.add("terminal-output");
       dummyLine.textContent = this.getRandomDummyLine();
       this.terminal.prepend(dummyLine);
     }
   }
 
-  createNewLine(className = 'terminal-line') {
-    const line = document.createElement('div');
+  createNewLine(className = "terminal-line") {
+    const line = document.createElement("div");
     line.className = className;
 
     this.terminal.prepend(line);
@@ -145,9 +145,9 @@ class TerminalEmulator {
     this.lineIndex = (this.lineIndex + 1) % this.commands.length;
     const cmdObj = this.commands[this.lineIndex];
 
-    if (cmdObj.type === 'normal') {
-      this.typeNormal(cmdObj.text, cmdObj.outputClass || 'terminal-output');
-    } else if (cmdObj.type === 'progress') {
+    if (cmdObj.type === "normal") {
+      this.typeNormal(cmdObj.text, cmdObj.outputClass || "terminal-output");
+    } else if (cmdObj.type === "progress") {
       this.typeProgressBar(
         cmdObj.text,
         cmdObj.duration || TERMINAL_CONFIG.DEFAULT_PROGRESS_DURATION
@@ -157,7 +157,7 @@ class TerminalEmulator {
 
   typeNormal(text: string, outputClass: string) {
     this.isTyping = true;
-    this.currentCommandLines = text.split('\n');
+    this.currentCommandLines = text.split("\n");
     this.currentCommandLineIndex = 0;
     this.charIndex = 0;
     this.currentLine = this.createNewLine(outputClass);
@@ -168,8 +168,14 @@ class TerminalEmulator {
   typeLine(outputClass: string) {
     const lineText = this.currentCommandLines[this.currentCommandLineIndex];
 
-    if (Math.random() < TERMINAL_CONFIG.TYPO_PROBABILITY && this.charIndex > 0) {
-      this.currentLine!.textContent = this.currentLine!.textContent!.slice(0, -1);
+    if (
+      Math.random() < TERMINAL_CONFIG.TYPO_PROBABILITY &&
+      this.charIndex > 0
+    ) {
+      this.currentLine!.textContent = this.currentLine!.textContent!.slice(
+        0,
+        -1
+      );
       setTimeout(() => this.typeLine(outputClass), 50);
       return;
     }
@@ -177,9 +183,14 @@ class TerminalEmulator {
     if (this.charIndex < lineText.length) {
       this.currentLine!.textContent += lineText[this.charIndex];
       this.charIndex++;
-      const delay = this.isIdle() ? 100 + Math.random() * 100 : Math.random() * 20 + 2;
+      const delay = this.isIdle()
+        ? 100 + Math.random() * 100
+        : Math.random() * 20 + 2;
       setTimeout(() => this.typeLine(outputClass), delay);
-    } else if (this.currentCommandLineIndex < this.currentCommandLines.length - 1) {
+    } else if (
+      this.currentCommandLineIndex <
+      this.currentCommandLines.length - 1
+    ) {
       this.currentCommandLineIndex++;
       this.charIndex = 0;
       this.currentLine = this.createNewLine(outputClass);
@@ -196,18 +207,24 @@ class TerminalEmulator {
     duration = TERMINAL_CONFIG.DEFAULT_PROGRESS_DURATION,
     steps = TERMINAL_CONFIG.DEFAULT_PROGRESS_STEPS
   ) {
-    const line = this.createNewLine('terminal-progress');
-    line.textContent = '> ' + command;
+    const line = this.createNewLine("terminal-progress");
+    line.textContent = "> " + command;
 
-    const progressLine = this.createNewLine('terminal-progress');
+    const progressLine = this.createNewLine("terminal-progress");
     let step = 0;
 
     const designFunc =
-      PROGRESS_BAR_DESIGNS[Math.floor(Math.random() * PROGRESS_BAR_DESIGNS.length)];
+      PROGRESS_BAR_DESIGNS[
+        Math.floor(Math.random() * PROGRESS_BAR_DESIGNS.length)
+      ];
 
     const stepProgress = () => {
       step++;
-      progressLine.textContent = designFunc(step, steps, TERMINAL_CONFIG.BAR_LENGTH);
+      progressLine.textContent = designFunc(
+        step,
+        steps,
+        TERMINAL_CONFIG.BAR_LENGTH
+      );
 
       if (step < steps) {
         const delay = this.isIdle() ? (duration / steps) * 2 : duration / steps;
@@ -230,5 +247,7 @@ export default function TerminalBackground() {
     }
   }, []);
 
-  return <div ref={terminalRef} className="terminal-background" id="terminal" />;
+  return (
+    <div ref={terminalRef} className="terminal-background" id="terminal" />
+  );
 }

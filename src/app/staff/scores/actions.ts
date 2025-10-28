@@ -21,8 +21,13 @@ export async function getTeamScores(params: {
   sortBy?: "id" | "score" | "createdAt";
   sortOrder?: "asc" | "desc";
 }) {
-  const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc" } = params;
-  
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = params;
+
   const queryParams = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -66,12 +71,15 @@ export async function createTeamScore(data: {
 }
 
 // チームスコア更新
-export async function updateTeamScore(id: number, data: {
-  teamName?: string;
-  headcount?: number;
-  description?: string;
-  score?: number;
-}) {
+export async function updateTeamScore(
+  id: number,
+  data: {
+    teamName?: string;
+    headcount?: number;
+    description?: string;
+    score?: number;
+  }
+) {
   const response = await fetch(`${API_URL}/api/teamscores/${id}`, {
     method: "PATCH",
     headers,
@@ -110,8 +118,13 @@ export async function getPlayerScores(params: {
   sortBy?: "id" | "score" | "createdAt";
   sortOrder?: "asc" | "desc";
 }) {
-  const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc" } = params;
-  
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = params;
+
   const queryParams = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -154,11 +167,14 @@ export async function createPlayerScore(data: {
 }
 
 // プレイヤースコア更新
-export async function updatePlayerScore(id: number, data: {
-  playerName?: string;
-  score?: number;
-  team_score_id?: number;
-}) {
+export async function updatePlayerScore(
+  id: number,
+  data: {
+    playerName?: string;
+    score?: number;
+    team_score_id?: number;
+  }
+) {
   const response = await fetch(`${API_URL}/api/playerscores/${id}`, {
     method: "PATCH",
     headers,
@@ -192,16 +208,21 @@ export async function deletePlayerScore(id: number) {
 }
 
 // TmpScoreから指定IDのスコアを取得（全ステージ合計）
-export async function getTmpScoreTotalByUserId(userId: number): Promise<number> {
+export async function getTmpScoreTotalByUserId(
+  userId: number
+): Promise<number> {
   const stages = ["First", "Second", "Third"];
   let totalScore = 0;
 
   for (const stage of stages) {
     try {
-      const response = await fetch(`${API_URL}/api/tmpscores/${userId}/${stage}`, {
-        headers,
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `${API_URL}/api/tmpscores/${userId}/${stage}`,
+        {
+          headers,
+          cache: "no-store",
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

@@ -51,12 +51,14 @@ export default function ScoreManagement() {
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // モーダル状態
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<TeamScore | null>(null);
-  const [modalPlayers, setModalPlayers] = useState<Array<{ id?: number; playerName: string; score: number }>>([]);
-  
+  const [modalPlayers, setModalPlayers] = useState<
+    Array<{ id?: number; playerName: string; score: number }>
+  >([]);
+
   // ページネーション情報
   const [teamPagination, setTeamPagination] = useState<PaginationInfo>({
     page: 1,
@@ -70,12 +72,15 @@ export default function ScoreManagement() {
     total: 0,
     totalPages: 0,
   });
-  
+
   // ソート状態
   const [teamSortField, setTeamSortField] = useState<SortField>("createdAt");
-  const [teamSortDirection, setTeamSortDirection] = useState<SortDirection>("desc");
-  const [playerSortField, setPlayerSortField] = useState<SortField>("createdAt");
-  const [playerSortDirection, setPlayerSortDirection] = useState<SortDirection>("desc");
+  const [teamSortDirection, setTeamSortDirection] =
+    useState<SortDirection>("desc");
+  const [playerSortField, setPlayerSortField] =
+    useState<SortField>("createdAt");
+  const [playerSortDirection, setPlayerSortDirection] =
+    useState<SortDirection>("desc");
 
   // チームスコアフォーム
   const [teamForm, setTeamForm] = useState({
@@ -158,19 +163,29 @@ export default function ScoreManagement() {
   useEffect(() => {
     fetchTeamScores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamPagination.page, teamPagination.limit, teamSortField, teamSortDirection]);
+  }, [
+    teamPagination.page,
+    teamPagination.limit,
+    teamSortField,
+    teamSortDirection,
+  ]);
 
   useEffect(() => {
     fetchPlayerScores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerPagination.page, playerPagination.limit, playerSortField, playerSortDirection]);
+  }, [
+    playerPagination.page,
+    playerPagination.limit,
+    playerSortField,
+    playerSortDirection,
+  ]);
 
   // プレイヤーが変更されたら人数とスコアを自動計算
   useEffect(() => {
-    const headcount = modalPlayers.filter(p => p.playerName.trim()).length;
+    const headcount = modalPlayers.filter((p) => p.playerName.trim()).length;
     const totalScore = modalPlayers.reduce((sum, p) => sum + (p.score || 0), 0);
-    
-    setTeamForm(prev => ({
+
+    setTeamForm((prev) => ({
       ...prev,
       headcount: headcount, // 0人も許可
       score: totalScore,
@@ -196,24 +211,36 @@ export default function ScoreManagement() {
   };
 
   // ソートアイコン表示
-  const SortIcon = ({ field, currentField, direction }: { field: SortField; currentField: SortField; direction: SortDirection }) => {
+  const SortIcon = ({
+    field,
+    currentField,
+    direction,
+  }: {
+    field: SortField;
+    currentField: SortField;
+    direction: SortDirection;
+  }) => {
     if (field !== currentField) {
       return <span className="ml-1 text-gray-400">⇅</span>;
     }
-    return direction === "asc" ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
+    return direction === "asc" ? (
+      <span className="ml-1">↑</span>
+    ) : (
+      <span className="ml-1">↓</span>
+    );
   };
 
   // ページネーションコンポーネント
-  const Pagination = ({ 
-    currentPage, 
-    totalPages, 
-    onPageChange, 
-    pageSize, 
+  const Pagination = ({
+    currentPage,
+    totalPages,
+    onPageChange,
+    pageSize,
     onPageSizeChange,
-    totalItems 
-  }: { 
-    currentPage: number; 
-    totalPages: number; 
+    totalItems,
+  }: {
+    currentPage: number;
+    totalPages: number;
     onPageChange: (page: number) => void;
     pageSize: number;
     onPageSizeChange: (size: number) => void;
@@ -223,7 +250,7 @@ export default function ScoreManagement() {
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
@@ -240,7 +267,9 @@ export default function ScoreManagement() {
         <div className="flex flex-1 items-center justify-between">
           <div className="flex items-center gap-4">
             <p className="text-sm text-gray-700">
-              <span className="font-medium">{startItem}</span> ～ <span className="font-medium">{endItem}</span> 件 / 全 <span className="font-medium">{totalItems}</span> 件
+              <span className="font-medium">{startItem}</span> ～{" "}
+              <span className="font-medium">{endItem}</span> 件 / 全{" "}
+              <span className="font-medium">{totalItems}</span> 件
             </p>
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-700">表示件数:</label>
@@ -255,7 +284,7 @@ export default function ScoreManagement() {
               </select>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={() => onPageChange(1)}
@@ -271,7 +300,7 @@ export default function ScoreManagement() {
             >
               前へ
             </button>
-            
+
             <div className="flex gap-1">
               {startPage > 1 && (
                 <>
@@ -281,10 +310,12 @@ export default function ScoreManagement() {
                   >
                     1
                   </button>
-                  {startPage > 2 && <span className="px-2 py-1 text-gray-500">...</span>}
+                  {startPage > 2 && (
+                    <span className="px-2 py-1 text-gray-500">...</span>
+                  )}
                 </>
               )}
-              
+
               {pages.map((page) => (
                 <button
                   key={page}
@@ -298,10 +329,12 @@ export default function ScoreManagement() {
                   {page}
                 </button>
               ))}
-              
+
               {endPage < totalPages && (
                 <>
-                  {endPage < totalPages - 1 && <span className="px-2 py-1 text-gray-500">...</span>}
+                  {endPage < totalPages - 1 && (
+                    <span className="px-2 py-1 text-gray-500">...</span>
+                  )}
                   <button
                     onClick={() => onPageChange(totalPages)}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
@@ -311,7 +344,7 @@ export default function ScoreManagement() {
                 </>
               )}
             </div>
-            
+
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
@@ -356,7 +389,11 @@ export default function ScoreManagement() {
       score: team.score,
     });
     setModalPlayers(
-      team.playerScores?.map(p => ({ id: p.id, playerName: p.playerName, score: p.score })) || []
+      team.playerScores?.map((p) => ({
+        id: p.id,
+        playerName: p.playerName,
+        score: p.score,
+      })) || []
     );
     setTmpScoreUserId("");
     setIsModalOpen(true);
@@ -381,7 +418,11 @@ export default function ScoreManagement() {
   };
 
   // プレイヤーを更新
-  const updatePlayer = (index: number, field: "playerName" | "score", value: string | number) => {
+  const updatePlayer = (
+    index: number,
+    field: "playerName" | "score",
+    value: string | number
+  ) => {
     const updated = [...modalPlayers];
     updated[index] = { ...updated[index], [field]: value };
     setModalPlayers(updated);
@@ -404,18 +445,17 @@ export default function ScoreManagement() {
     setError(null);
     try {
       const totalScore = await getTmpScoreTotalByUserId(userId);
-      
+
       if (totalScore === 0) {
         setError(`ユーザーID ${userId} のスコアが見つかりません`);
       } else {
         // プレイヤーとして追加
         const playerName = `ユーザーID: ${userId}`;
-        setModalPlayers(prev => [
-          ...prev,
-          { playerName, score: totalScore }
-        ]);
+        setModalPlayers((prev) => [...prev, { playerName, score: totalScore }]);
         // 成功メッセージ
-        alert(`プレイヤー「${playerName}」を追加しました（スコア: ${totalScore}）`);
+        alert(
+          `プレイヤー「${playerName}」を追加しました（スコア: ${totalScore}）`
+        );
         // TmpScore IDフィールドをクリア
         setTmpScoreUserId("");
       }
@@ -429,14 +469,14 @@ export default function ScoreManagement() {
   // チームスコア作成・更新（プレイヤー込み）
   const handleSaveTeamWithPlayers = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // バリデーション: 1人以上のプレイヤーが必要
-    const validPlayers = modalPlayers.filter(p => p.playerName.trim());
+    const validPlayers = modalPlayers.filter((p) => p.playerName.trim());
     if (validPlayers.length === 0) {
       setError("少なくとも1人のプレイヤーを追加してください");
       return;
     }
-    
+
     setLoading(true);
     setError(null);
 
@@ -449,8 +489,12 @@ export default function ScoreManagement() {
         teamId = editingTeam.id;
 
         // 既存プレイヤーを更新・削除
-        const existingPlayerIds = new Set(modalPlayers.filter(p => p.id).map(p => p.id!));
-        const currentPlayerIds = new Set(editingTeam.playerScores?.map(p => p.id) || []);
+        const existingPlayerIds = new Set(
+          modalPlayers.filter((p) => p.id).map((p) => p.id!)
+        );
+        const currentPlayerIds = new Set(
+          editingTeam.playerScores?.map((p) => p.id) || []
+        );
 
         // 削除されたプレイヤー
         for (const id of currentPlayerIds) {
@@ -597,7 +641,9 @@ export default function ScoreManagement() {
           {/* チームスコア一覧 */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">チームスコア一覧</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                チームスコア一覧
+              </h3>
               <button
                 onClick={fetchTeamScores}
                 disabled={loading}
@@ -607,45 +653,80 @@ export default function ScoreManagement() {
               </button>
             </div>
             {teamScores.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">チームスコアがありません</p>
+              <p className="text-gray-500 text-center py-8">
+                チームスコアがありません
+              </p>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handleTeamSort("id")}
                         >
-                          ID <SortIcon field="id" currentField={teamSortField} direction={teamSortDirection} />
+                          ID{" "}
+                          <SortIcon
+                            field="id"
+                            currentField={teamSortField}
+                            direction={teamSortDirection}
+                          />
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">チーム名</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">人数</th>
-                        <th 
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          チーム名
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          人数
+                        </th>
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handleTeamSort("score")}
                         >
-                          スコア <SortIcon field="score" currentField={teamSortField} direction={teamSortDirection} />
+                          スコア{" "}
+                          <SortIcon
+                            field="score"
+                            currentField={teamSortField}
+                            direction={teamSortDirection}
+                          />
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handleTeamSort("createdAt")}
                         >
-                          作成日時 <SortIcon field="createdAt" currentField={teamSortField} direction={teamSortDirection} />
+                          作成日時{" "}
+                          <SortIcon
+                            field="createdAt"
+                            currentField={teamSortField}
+                            direction={teamSortDirection}
+                          />
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          操作
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {teamScores.map((team) => (
                         <tr key={team.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{team.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{team.teamName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.headcount}人</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">{team.score}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            #{team.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {team.teamName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.headcount}人
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                            {team.score}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {format(new Date(team.createdAt), "yyyy/M/d HH:mm", { locale: ja })}
+                            {format(
+                              new Date(team.createdAt),
+                              "yyyy/M/d HH:mm",
+                              { locale: ja }
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex gap-2">
@@ -690,7 +771,8 @@ export default function ScoreManagement() {
           {/* 閲覧専用の説明 */}
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
             <p className="text-blue-800 text-sm">
-              <strong>ℹ️ プレイヤースコアは閲覧のみです。</strong><br />
+              <strong>ℹ️ プレイヤースコアは閲覧のみです。</strong>
+              <br />
               プレイヤースコアの追加・編集は、チームスコアタブから「編集」ボタンをクリックして行ってください。
             </p>
           </div>
@@ -698,7 +780,9 @@ export default function ScoreManagement() {
           {/* プレイヤースコア一覧 */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">プレイヤースコア一覧</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                プレイヤースコア一覧
+              </h3>
               <button
                 onClick={fetchPlayerScores}
                 disabled={loading}
@@ -708,44 +792,77 @@ export default function ScoreManagement() {
               </button>
             </div>
             {playerScores.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">プレイヤースコアがありません</p>
+              <p className="text-gray-500 text-center py-8">
+                プレイヤースコアがありません
+              </p>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handlePlayerSort("id")}
                         >
-                          ID <SortIcon field="id" currentField={playerSortField} direction={playerSortDirection} />
+                          ID{" "}
+                          <SortIcon
+                            field="id"
+                            currentField={playerSortField}
+                            direction={playerSortDirection}
+                          />
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">プレイヤー名</th>
-                        <th 
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          プレイヤー名
+                        </th>
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handlePlayerSort("score")}
                         >
-                          スコア <SortIcon field="score" currentField={playerSortField} direction={playerSortDirection} />
+                          スコア{" "}
+                          <SortIcon
+                            field="score"
+                            currentField={playerSortField}
+                            direction={playerSortDirection}
+                          />
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">チームID</th>
-                        <th 
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          チームID
+                        </th>
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                           onClick={() => handlePlayerSort("createdAt")}
                         >
-                          作成日時 <SortIcon field="createdAt" currentField={playerSortField} direction={playerSortDirection} />
+                          作成日時{" "}
+                          <SortIcon
+                            field="createdAt"
+                            currentField={playerSortField}
+                            direction={playerSortDirection}
+                          />
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {playerScores.map((player) => (
                         <tr key={player.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{player.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{player.playerName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">{player.score}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{player.team_score_id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            #{player.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {player.playerName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                            {player.score}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            #{player.team_score_id}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {format(new Date(player.createdAt), "yyyy/M/d HH:mm", { locale: ja })}
+                            {format(
+                              new Date(player.createdAt),
+                              "yyyy/M/d HH:mm",
+                              { locale: ja }
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -786,7 +903,9 @@ export default function ScoreManagement() {
               <form onSubmit={handleSaveTeamWithPlayers} className="space-y-6">
                 {/* チーム情報 */}
                 <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                  <h3 className="font-bold text-lg text-gray-900">チーム情報</h3>
+                  <h3 className="font-bold text-lg text-gray-900">
+                    チーム情報
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -796,13 +915,18 @@ export default function ScoreManagement() {
                         type="text"
                         required
                         value={teamForm.teamName}
-                        onChange={(e) => setTeamForm({ ...teamForm, teamName: e.target.value })}
+                        onChange={(e) =>
+                          setTeamForm({ ...teamForm, teamName: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        人数 <span className="text-gray-500 text-xs">(自動計算)</span>
+                        人数{" "}
+                        <span className="text-gray-500 text-xs">
+                          (自動計算)
+                        </span>
                       </label>
                       <input
                         type="number"
@@ -811,25 +935,36 @@ export default function ScoreManagement() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
                         title="プレイヤー数から自動計算されます"
                       />
-                    </div>                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      スコア <span className="text-gray-500 text-xs">(自動計算)</span>
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      value={teamForm.score}
-                      readOnly
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                      title="プレイヤースコアの合計から自動計算されます"
-                    />
-                  </div>
+                    </div>{" "}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        スコア{" "}
+                        <span className="text-gray-500 text-xs">
+                          (自動計算)
+                        </span>
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={teamForm.score}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+                        title="プレイヤースコアの合計から自動計算されます"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      説明
+                    </label>
                     <textarea
                       value={teamForm.description}
-                      onChange={(e) => setTeamForm({ ...teamForm, description: e.target.value })}
+                      onChange={(e) =>
+                        setTeamForm({
+                          ...teamForm,
+                          description: e.target.value,
+                        })
+                      }
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -838,9 +973,12 @@ export default function ScoreManagement() {
 
                 {/* TmpScoreからのスコア自動読込 */}
                 <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg space-y-4">
-                  <h3 className="font-bold text-lg text-gray-900">TmpScoreからのスコア読込</h3>
+                  <h3 className="font-bold text-lg text-gray-900">
+                    TmpScoreからのスコア読込
+                  </h3>
                   <p className="text-sm text-gray-700">
-                    ユーザーIDを入力して、TmpScoreのスコア（First/Second/Third の合計）を<strong>プレイヤーとして追加</strong>できます。
+                    ユーザーIDを入力して、TmpScoreのスコア（First/Second/Third
+                    の合計）を<strong>プレイヤーとして追加</strong>できます。
                   </p>
                   <div className="flex gap-3 items-end">
                     <div className="flex-1">
@@ -870,7 +1008,9 @@ export default function ScoreManagement() {
                 {/* プレイヤースコア */}
                 <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-gray-900">プレイヤースコア</h3>
+                    <h3 className="font-bold text-lg text-gray-900">
+                      プレイヤースコア
+                    </h3>
                     <button
                       type="button"
                       onClick={addPlayer}
@@ -881,20 +1021,32 @@ export default function ScoreManagement() {
                   </div>
 
                   {modalPlayers.length === 0 ? (
-                    <p className="text-gray-500 text-sm">プレイヤーがいません。追加してください。</p>
+                    <p className="text-gray-500 text-sm">
+                      プレイヤーがいません。追加してください。
+                    </p>
                   ) : (
                     <div className="space-y-3">
                       {modalPlayers.map((player, index) => (
-                        <div key={index} className="flex gap-3 items-start bg-white p-3 rounded-lg border border-gray-200">
+                        <div
+                          key={index}
+                          className="flex gap-3 items-start bg-white p-3 rounded-lg border border-gray-200"
+                        >
                           <div className="flex-1">
                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                              プレイヤー名 <span className="text-red-500">*</span>
+                              プレイヤー名{" "}
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="text"
                               required
                               value={player.playerName}
-                              onChange={(e) => updatePlayer(index, "playerName", e.target.value)}
+                              onChange={(e) =>
+                                updatePlayer(
+                                  index,
+                                  "playerName",
+                                  e.target.value
+                                )
+                              }
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                             />
                           </div>
@@ -906,7 +1058,13 @@ export default function ScoreManagement() {
                               type="number"
                               required
                               value={player.score}
-                              onChange={(e) => updatePlayer(index, "score", parseInt(e.target.value) || 0)}
+                              onChange={(e) =>
+                                updatePlayer(
+                                  index,
+                                  "score",
+                                  parseInt(e.target.value) || 0
+                                )
+                              }
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                             />
                           </div>
@@ -936,7 +1094,11 @@ export default function ScoreManagement() {
                     type="submit"
                     disabled={loading || teamForm.headcount === 0}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={teamForm.headcount === 0 ? "少なくとも1人のプレイヤーを追加してください" : ""}
+                    title={
+                      teamForm.headcount === 0
+                        ? "少なくとも1人のプレイヤーを追加してください"
+                        : ""
+                    }
                   >
                     {loading ? "保存中..." : editingTeam ? "更新" : "作成"}
                   </button>
