@@ -69,31 +69,13 @@ export default function HowToReservePage() {
     },
     {
       id: 4,
-      title: "予約方法を選択",
+      title: "お名前の入力＆送信",
       icon: "✅",
       content: (
         <div>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            2つの予約方法から選択できます。
+            予約者のお名前を入力して、予約を確定します。
           </p>
-          <div className="space-y-4">
-            <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-700">
-              <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">
-                今すぐチーム情報を登録して予約
-              </h4>
-              <p className="text-sm text-green-700 dark:text-green-300">
-                チーム名とメンバー情報を入力して予約完了。当日の受付がスムーズです。
-              </p>
-            </div>
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                チーム情報は後で登録（予約のみ確定）
-              </h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                まず予約を確保してから、後でチーム情報を追加できます。
-              </p>
-            </div>
-          </div>
         </div>
       )
     },
