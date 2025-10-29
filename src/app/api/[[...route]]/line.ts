@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { z } from 'zod';
+import { date, z } from 'zod';
 import { prisma } from '../../../lib/prisma';
 
 const app = new OpenAPIHono();
@@ -212,6 +212,13 @@ function verifyLineSignature(body: string, signature: string, secret: string): b
 
 async function buildReplyText(originalText: string): Promise<string> {
   if (originalText.includes('待ち時間')) {
+    const now = new Date();
+    const jstStart = new Date('2025-11-01T01:00:00.000Z'); // JST 2025/11/01 10:00
+
+    if (now < jstStart) {
+      return 'こうよう祭は11/1 10:00から開始します。もうしばらくお待ちください。';
+    }
+
     const waitMinutes = await getEstimatedWaitMinutes();
 
     if (waitMinutes === null) {
@@ -222,9 +229,10 @@ async function buildReplyText(originalText: string): Promise<string> {
       return 'すぐにご案内可能です。受付までお越しください。';
     }
 
-    return `現在の待ち時間は約${waitMinutes}分です。`;
+    return `現在の待ち時間は約${waitMinutes}分です。
+    ※この待ち時間は目安であり、状況により変動する場合があります。`;
   }
-
+  
   return '申し訳ありませんが、待ち時間に関するご質問のみお答えできます。';
 }
 

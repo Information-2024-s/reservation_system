@@ -15,7 +15,7 @@ interface TimeSlot {
   id: number;
   slotTime: string;
   slotType: "RESERVABLE" | "WALK_IN";
-  status: "AVAILABLE" | "BOOKED";
+  status: "AVAILABLE" | "BOOKED" | "UNAVAILABLE";
   createdAt: string;
   updatedAt: string;
 }

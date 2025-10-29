@@ -1,172 +1,5 @@
 import { z } from "@hono/zod-openapi";
 
-// Team Zod Object
-export const team = z.object({
-  id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "チームID" }),
-  name: z.string().openapi({ example: "Team Alpha", description: "チーム名" }),
-  headcount: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 5, description: "人数" }),
-  createdAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
-  updatedAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
-});
-
-export const createTeam = z.object({
-  name: z
-    .string()
-    .min(1)
-    .openapi({ example: "Team Alpha", description: "チーム名" }),
-  headcount: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 5, description: "人数" }),
-});
-
-export const updateTeam = z.object({
-  name: z
-    .string()
-    .min(1)
-    .optional()
-    .openapi({ example: "Team Beta", description: "チーム名" }),
-  headcount: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .openapi({ example: 6, description: "人数" }),
-  memberNames: z
-    .array(z.string())
-    .optional()
-    .openapi({
-      example: ["田中太郎", "佐藤花子"],
-      description: "メンバー名のリスト",
-    }),
-});
-
-// User Zod Object
-export const user = z.object({
-  id: z.string().openapi({
-    example: "clig1h2k40000qn8l4g4l4g4l",
-    description: "ユーザーID",
-  }),
-  name: z
-    .string()
-    .nullable()
-    .openapi({ example: "John Doe", description: "ユーザー名" }),
-  email: z
-    .string()
-    .nullable()
-    .openapi({ example: "john@example.com", description: "メールアドレス" }),
-  teamId: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .openapi({ example: 1, description: "チームID" }),
-  createdAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
-  updatedAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
-});
-
-export const createUser = z.object({
-  name: z
-    .string()
-    .min(1)
-    .openapi({ example: "John Doe", description: "ユーザー名" }),
-  email: z
-    .string()
-    .email()
-    .openapi({ example: "john@example.com", description: "メールアドレス" }),
-  teamId: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .openapi({ example: 1, description: "チームID" }),
-});
-
-export const updateUser = z.object({
-  name: z
-    .string()
-    .min(1)
-    .optional()
-    .openapi({ example: "Jane Doe", description: "ユーザー名" }),
-  teamId: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .openapi({ example: 2, description: "チームID" }),
-});
-
-// GameSession Zod Object
-export const gameSession = z.object({
-  id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "ゲームセッションID" }),
-  name: z
-    .string()
-    .openapi({ example: "第1回大会", description: "セッション名" }),
-  description: z
-    .string()
-    .nullable()
-    .openapi({ example: "年末大会", description: "セッション説明" }),
-  team_id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "チームID" }),
-  createdAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
-  updatedAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
-});
-
-export const createGameSession = z.object({
-  name: z
-    .string()
-    .min(1)
-    .openapi({ example: "第1回大会", description: "セッション名" }),
-  description: z
-    .string()
-    .optional()
-    .openapi({ example: "年末大会", description: "セッション説明" }),
-  team_id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "チームID" }),
-});
-
-export const updateGameSession = z.object({
-  name: z
-    .string()
-    .min(1)
-    .optional()
-    .openapi({ example: "第2回大会", description: "セッション名" }),
-  description: z
-    .string()
-    .optional()
-    .openapi({ example: "春の大会", description: "セッション説明" }),
-});
 
 // TeamScore Zod Object (updated from Score)
 export const teamScore = z.object({
@@ -281,50 +114,6 @@ export const updatePlayerScore = z.object({
     .openapi({ example: 30, description: "スコア" }),
 });
 
-// Player Zod Object
-export const player = z.object({
-  id: z
-    .number()
-    .int()
-    .positive()
-    .openapi({ example: 1, description: "プレイヤーID" }),
-  name: z
-    .string()
-    .nullable()
-    .openapi({ example: "太郎", description: "プレイヤー名" }),
-  team_id: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .openapi({ example: 1, description: "チームID" }),
-  createdAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "作成日" }),
-  updatedAt: z
-    .string()
-    .openapi({ example: "2023-01-01T00:00:00.000Z", description: "更新日" }),
-});
-
-export const createPlayer = z.object({
-  name: z
-    .string()
-    .optional()
-    .openapi({ example: "太郎", description: "プレイヤー名" }),
-  team_id: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .openapi({ example: 1, description: "チームID" }),
-});
-
-export const updatePlayer = z.object({
-  name: z
-    .string()
-    .optional()
-    .openapi({ example: "花子", description: "プレイヤー名" }),
-});
 
 // Legacy Score for backward compatibility
 export const score = teamScore;
@@ -367,7 +156,7 @@ export const reservationWithTimeSlot = reservation.extend({
       id: z.number().int().positive(),
       slotTime: z.string(),
       slotType: z.enum(["RESERVABLE", "WALK_IN"]),
-      status: z.enum(["AVAILABLE", "BOOKED"]),
+      status: z.enum(["AVAILABLE", "BOOKED", "UNAVAILABLE"]),
       createdAt: z.string(),
       updatedAt: z.string(),
     })
@@ -461,7 +250,7 @@ export const slotType = z
   .enum(["RESERVABLE", "WALK_IN"])
   .openapi({ example: "RESERVABLE", description: "枠の種類" });
 export const slotStatus = z
-  .enum(["AVAILABLE", "BOOKED"])
+  .enum(["AVAILABLE", "BOOKED", "UNAVAILABLE"])
   .openapi({ example: "AVAILABLE", description: "予約状況" });
 
 export const timeSlot = z.object({

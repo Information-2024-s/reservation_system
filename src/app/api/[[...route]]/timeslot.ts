@@ -107,6 +107,9 @@ app.openapi(getTimeSlotsRoute, async (c) => {
   const timeSlots = await prisma.timeSlot.findMany({
     where: whereConditions,
     orderBy: { slotTime: "asc" },
+    include: {
+      reservation: true,
+    },
   });
 
   const formattedTimeSlots = timeSlots.map((slot) => ({
@@ -116,6 +119,7 @@ app.openapi(getTimeSlotsRoute, async (c) => {
     status: slot.status,
     createdAt: slot.createdAt.toISOString(),
     updatedAt: slot.updatedAt.toISOString(),
+    hasReservation: slot.reservation !== null,
   }));
 
   return c.json(formattedTimeSlots);

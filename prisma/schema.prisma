@@ -16,6 +16,7 @@ enum SlotType {
 enum SlotStatus {
   AVAILABLE
   BOOKED
+  UNAVAILABLE
 }
 
 enum CallStatus {

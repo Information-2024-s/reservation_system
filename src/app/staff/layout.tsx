@@ -22,6 +22,12 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                 予約管理
               </Link>
               <Link
+                href="/staff/timeslots"
+                className="px-4 py-2 rounded-lg transition-colors hover:bg-indigo-100 text-indigo-700 font-medium"
+              >
+                タイムスロット
+              </Link>
+              <Link
                 href="/staff/scores"
                 className="px-4 py-2 rounded-lg transition-colors hover:bg-green-100 text-green-700 font-medium"
               >
