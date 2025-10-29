@@ -161,7 +161,7 @@ export default function Home() {
               </div>
 
               {/* ログアウトボタン（LINEアプリ内では非表示） */}
-              {isInLineApp === false && (
+              {!liff.isInClient() && (
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
                   <button
                     onClick={handleLogout}
