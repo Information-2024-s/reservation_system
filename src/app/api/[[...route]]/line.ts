@@ -213,10 +213,10 @@ function verifyLineSignature(body: string, signature: string, secret: string): b
 async function buildReplyText(originalText: string): Promise<string> {
   if (originalText.includes('待ち時間')) {
     const now = new Date();
-    const jstStart = new Date('2025-11-01T01:00:00.000Z'); // JST 2025/11/01 10:00
+    const jstStart = new Date('2025-11-01T00:15:00.000Z'); // JST 2025/11/01 9:15
 
     if (now < jstStart) {
-      return 'こうよう祭は11/1 10:00から開始します。もうしばらくお待ちください。';
+      return 'こうよう祭は11/1 9:15から開始します。もうしばらくお待ちください。';
     }
 
     const waitMinutes = await getEstimatedWaitMinutes();
@@ -238,7 +238,7 @@ async function buildReplyText(originalText: string): Promise<string> {
 
 async function getEstimatedWaitMinutes(): Promise<number | null> {
   const now = new Date();
-  const baseline = new Date('2025-11-01T01:00:00.000Z'); // JST 2025/11/1 10:00
+  const baseline = new Date('2025-11-01T00:15:00.000Z'); // JST 2025/11/1 9:15
 
   const referenceTime = now > baseline ? now : baseline;
 

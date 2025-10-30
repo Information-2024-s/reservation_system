@@ -102,16 +102,29 @@ export default function ReservePage() {
     { value: "2025-11-02", label: "2025年11月2日" },
   ];
 
-  // 利用可能な時間帯（10時台から16時台まで）
-  const availableHours = [
-    { value: 10, label: "10時台 (10:00-10:59)" },
-    { value: 11, label: "11時台 (11:00-11:59)" },
-    { value: 12, label: "12時台 (12:00-12:59)" },
-    { value: 13, label: "13時台 (13:00-13:59)" },
-    { value: 14, label: "14時台 (14:00-14:59)" },
-    { value: 15, label: "15時台 (15:00-15:59)" },
-    { value: 16, label: "16時台 (16:00-16:59)" },
-  ];
+  // 利用可能な時間帯を日付に応じて動的に生成
+  const getAvailableHours = (date: string) => {
+    const baseHours = [
+      { value: 9, label: "9時台 (9:00-9:59)" },
+      { value: 10, label: "10時台 (10:00-10:59)" },
+      { value: 11, label: "11時台 (11:00-11:59)" },
+      { value: 12, label: "12時台 (12:00-12:59)" },
+      { value: 13, label: "13時台 (13:00-13:59)" },
+      { value: 14, label: "14時台 (14:00-14:59)" },
+      { value: 15, label: "15時台 (15:00-15:59)" },
+      { value: 16, label: "16時台 (16:00-16:59)" },
+    ];
+
+    // 2日目（11/2）の場合は14時台までに制限
+    if (date === "2025-11-02") {
+      return baseHours.filter((hour) => hour.value <= 14);
+    }
+
+    return baseHours;
+  };
+
+  // 選択された日付に応じた利用可能時間帯
+  const availableHours = selectedDate ? getAvailableHours(selectedDate) : [];
 
   // ユーザーの既存予約を取得
   const fetchUserReservation = async () => {
@@ -460,7 +473,12 @@ export default function ReservePage() {
                 <div className="max-w-md mx-auto relative">
                   <select
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+                      // 日付が変わった際に時間帯選択をリセット
+                      setSelectedHour(null);
+                      setShowTimeSlots(false);
+                    }}
                     className="w-full p-4 pr-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 text-center text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer appearance-none"
                   >
                     <option

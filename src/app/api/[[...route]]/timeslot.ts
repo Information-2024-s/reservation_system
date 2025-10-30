@@ -40,7 +40,7 @@ const getTimeSlotsRoute = createRoute({
 app.openapi(getTimeSlotsRoute, async (c) => {
   // クエリパラメータを取得
   const date = c.req.query("date"); // YYYY-MM-DD形式
-  const startHour = c.req.query("startHour"); // 数値（10など）
+  const startHour = c.req.query("startHour"); // 数値（9など）
   const endHour = c.req.query("endHour"); // 数値（16など）
 
   const whereConditions: {
