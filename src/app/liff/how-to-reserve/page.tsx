@@ -35,7 +35,7 @@ export default function HowToReservePage() {
           </p>
           <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-2">
             <li>利用可能な日付から選択</li>
-            <li>10時台〜16時台の中から時間帯を選択</li>
+            <li>時間帯を選択</li>
             <li>「タイムスロットを検索」をクリック</li>
           </ul>
         </div>
@@ -90,9 +90,7 @@ export default function HowToReservePage() {
           </p>
           <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-2">
             <li>予約確認画面で詳細を確認できます</li>
-            <li>チーム情報の追加・編集が可能です</li>
             <li>予約のキャンセルも可能です</li>
-            <li>予約の時間が近づくとLINEで通知が来ます</li>
           </ul>
           <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -191,6 +189,14 @@ export default function HowToReservePage() {
               </h4>
               <p className="text-gray-600 dark:text-gray-300">
                 A: 1人につき予約は1つまでです。過去の予約は制限に含まれません。
+              </p>
+            </div>
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
+              <h4 className="font-semibold text-gray-800 dark:text-white mb-2">
+                Q: 複数人で行く場合、全員が予約する必要がありますか？
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: いいえ、代表者1名が予約すれば大丈夫です。
               </p>
             </div>
             <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
