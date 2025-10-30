@@ -264,4 +264,70 @@ async function getEstimatedWaitMinutes(): Promise<number | null> {
   return diffMinutes < 0 ? 0 : diffMinutes;
 }
 
+// LINEユーザープロフィール取得ルート
+const getProfileRoute = createRoute({
+  path: '/profile/{userId}',
+  method: 'get',
+  tags: ['LINE'],
+  summary: 'LINEユーザープロフィールを取得',
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: z.object({
+            userId: z.string(),
+            displayName: z.string(),
+            pictureUrl: z.string().optional(),
+            statusMessage: z.string().optional(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: 'Internal Server Error',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+app.openapi(getProfileRoute, async (c) => {
+  const { userId } = c.req.valid('param');
+  const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+
+  if (!channelAccessToken) {
+    console.error('LINE_CHANNEL_ACCESS_TOKEN is not set.');
+    return c.json({ error: 'LINE_CHANNEL_ACCESS_TOKEN が設定されていません。' }, 500);
+  }
+
+  try {
+    const response = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${channelAccessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('LINE Profile API Error:', response.status, errorText);
+      return c.json({ error: `プロフィール取得に失敗しました: ${response.status}` }, 500);
+    }
+
+    const profile = await response.json();
+    return c.json(profile, 200);
+  } catch (error) {
+    console.error('Error fetching LINE profile:', error);
+    return c.json({ error: 'プロフィール取得中にエラーが発生しました' }, 500);
+  }
+});
+
 export default app;

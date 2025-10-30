@@ -40,10 +40,29 @@ interface Props {
 export default function ReservationTable({ initialReservations }: Props) {
   const [filterStatus, setFilterStatus] = useState<"all" | "upcoming" | "past">("upcoming");
   const [isPending, startTransition] = useTransition();
+  const [fetchingLineUser, setFetchingLineUser] = useState<number | null>(null);
   const router = useRouter();
 
   // 現在時刻を固定（ハイドレーションエラー回避）
   const now = useMemo(() => new Date(), []);
+
+  const handleFetchLineUserName = async (lineUserId: string, reservationId: number) => {
+    setFetchingLineUser(reservationId);
+    try {
+      const response = await fetch(`/api/line/profile/${lineUserId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`LINEユーザー名: ${data.displayName}\nユーザーID: ${lineUserId}`);
+      } else {
+        throw new Error(data.error || "ユーザー情報の取得に失敗しました");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "ユーザー情報の取得に失敗しました");
+    } finally {
+      setFetchingLineUser(null);
+    }
+  };
 
   const handleDeleteReservation = async (id: number) => {
     if (!confirm("この予約を削除してもよろしいですか？")) {
@@ -279,9 +298,19 @@ export default function ReservationTable({ initialReservations }: Props) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {reservation.lineUserId ? (
-                        <span className="font-mono text-xs">
-                          {reservation.lineUserId.substring(0, 12)}...
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs">
+                            {reservation.lineUserId.substring(0, 12)}...
+                          </span>
+                          <button
+                            onClick={() => handleFetchLineUserName(reservation.lineUserId!, reservation.id)}
+                            disabled={fetchingLineUser === reservation.id}
+                            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-xs whitespace-nowrap"
+                            title="LINE表示名を取得"
+                          >
+                            {fetchingLineUser === reservation.id ? "取得中..." : "名前取得"}
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-gray-400">なし</span>
                       )}
