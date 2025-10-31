@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import QRCode from "qrcode";
 import TerminalBackground from "./TerminalBackground";
 import "./terminal-bg.css";
 
@@ -44,17 +45,35 @@ function RankingContent() {
     "team1" | "team2" | "team3" | "team4"
   >("team1");
   const [itemsToFetch, setItemsToFetch] = useState(50); // 取得する項目数
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // クエリパラメータから設定を取得
   const autoSwitch = searchParams.get("auto") === "true"; // デフォルトfalse
   const intervalSeconds = parseInt(searchParams.get("interval") || "10", 10); // デフォルト10秒
   const refreshInterval = parseInt(searchParams.get("refresh") || "30", 10); // データ再取得間隔(秒)、デフォルト30秒
+  const showQrCode = searchParams.get("qrcode") === "true"; // QRコード表示フラグ
+
+  // QRコード生成
+  useEffect(() => {
+    if (showQrCode && qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, "https://line.me/R/ti/p/@762penml", {
+        width: 120,
+        margin: 1,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      }).catch((err: unknown) => {
+        console.error("Error generating QR code:", err);
+      });
+    }
+  }, [showQrCode]);
 
   // 画面の高さに基づいて表示可能な項目数を計算
   useEffect(() => {
     const calculateItemsToShow = () => {
       const windowHeight = window.innerHeight;
-      
+
       // より正確な計算のため、実際の固定要素の高さを考慮
       // タイトル部分
       const titleHeight = 140;
@@ -66,21 +85,28 @@ function RankingContent() {
       const statsHeight = 180;
       // 上下のパディング
       const paddingHeight = 100;
-      
-      const headerFooterHeight = titleHeight + tabHeight + tableHeaderHeight + statsHeight + paddingHeight;
+
+      const headerFooterHeight =
+        titleHeight +
+        tabHeight +
+        tableHeaderHeight +
+        statsHeight +
+        paddingHeight;
       const availableHeight = windowHeight - headerFooterHeight;
-      
+
       // テーブル行の高さ（実測に基づく）
       // px-5 py-4 なので、縦方向パディングは約32px、コンテンツ約30px = 約62px
       const rowHeight = 62;
-      
+
       const itemsPerScreen = Math.floor(availableHeight / rowHeight);
-      
+
       // グループ化しないため、表示件数 = 取得件数
       // 少し余裕を持たせて計算結果に+5件（最低20件、最大200件）
       const itemsCount = Math.max(20, Math.min(itemsPerScreen + 5, 200));
-      
-      console.log(`[Height Calculation] Window: ${windowHeight}px, Header/Footer: ${headerFooterHeight}px, Available: ${availableHeight}px, Row: ${rowHeight}px, Items to fetch: ${itemsCount}`);
+
+      console.log(
+        `[Height Calculation] Window: ${windowHeight}px, Header/Footer: ${headerFooterHeight}px, Available: ${availableHeight}px, Row: ${rowHeight}px, Items to fetch: ${itemsCount}`
+      );
       setItemsToFetch(itemsCount);
     };
 
@@ -174,7 +200,7 @@ function RankingContent() {
   // 定期的にデータを再取得(ディスプレイ常時表示用)
   useEffect(() => {
     if (itemsToFetch === 0) return; // まだ計算されていない場合はスキップ
-    
+
     const REFRESH_INTERVAL = refreshInterval * 1000; // 秒をミリ秒に変換
 
     const interval = setInterval(() => {
@@ -243,12 +269,14 @@ function RankingContent() {
         : [];
 
     // グループ化せず、各スコアをそのまま表示用の形式に変換
-    return scores.map((score) => ({
-      teamName: score.teamName,
-      headcount: score.headcount,
-      totalScore: score.score,
-      count: 1,
-    })).sort((a, b) => b.totalScore - a.totalScore);
+    return scores
+      .map((score) => ({
+        teamName: score.teamName,
+        headcount: score.headcount,
+        totalScore: score.score,
+        count: 1,
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore);
   };
 
   const renderTeamRankings = (headcount: number) => {
@@ -422,6 +450,25 @@ function RankingContent() {
     <div className="ranking-page min-h-screen bg-gradient-to-b from-[#0b0f0f] to-[#0f1414] py-12 px-6 flex justify-center relative">
       <TerminalBackground />
       <div className="ranking-content w-full max-w-[1100px]">
+        {/* QRコード/LINE予約リンク（右下固定） */}
+        {showQrCode && (
+          <div
+            className="fixed bottom-6 right-6 z-50 flex flex-col items-center justify-center p-4 rounded-lg shadow-2xl hover:shadow-xl transition-shadow duration-200"
+            style={{
+              background: "#00B900",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            }}
+          >
+            <div className="bg-white p-2 rounded mb-2">
+              <canvas ref={qrCanvasRef} />
+            </div>
+            <span className="text-xs font-bold text-white text-center">
+              予約する
+            </span>
+          </div>
+        )}
+
         {/* タイトル */}
         <header className="text-center mb-6">
           <h1
