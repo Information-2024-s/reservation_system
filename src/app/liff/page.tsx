@@ -20,10 +20,19 @@ export default function Home() {
       if (liff.isLoggedIn()) {
         liff
           .getProfile()
-          .then((userProfile: { displayName: string; userId: string; pictureUrl?: string; statusMessage?: string }) => {
-            setProfile(userProfile);
-          })
-          .catch((err: unknown) => console.error("Error getting profile:", err));
+          .then(
+            (userProfile: {
+              displayName: string;
+              userId: string;
+              pictureUrl?: string;
+              statusMessage?: string;
+            }) => {
+              setProfile(userProfile);
+            }
+          )
+          .catch((err: unknown) =>
+            console.error("Error getting profile:", err)
+          );
       }
     }
   }, [liff]);
@@ -37,7 +46,7 @@ export default function Home() {
     } else {
       // 外部ブラウザの場合は外部ブラウザでログイン
       liff.login({
-        redirectUri: window.location.href
+        redirectUri: window.location.href,
       });
     }
   };
@@ -60,7 +69,7 @@ export default function Home() {
               {liffError}
             </p>
           </div>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
           >
@@ -91,7 +100,7 @@ export default function Home() {
 
   // LIFFのログイン状態を確認
   const isLiffLoggedIn = liff.isLoggedIn();
-  
+
   // セッションが読み込み中の場合は待機
   if (isLiffLoggedIn && status === "loading") {
     return (
@@ -136,22 +145,34 @@ export default function Home() {
                   ログイン完了！
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-300">
-                  こんにちは、<span className="font-semibold text-green-600 dark:text-green-400">
+                  こんにちは、
+                  <span className="font-semibold text-green-600 dark:text-green-400">
                     {profile?.displayName || "ゲスト"}
-                  </span>さん
+                  </span>
+                  さん
+                </p>
+              </div>
+
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <span className="font-semibold">
+                    📌 複数人でお越しの場合：
+                  </span>
+                  <br />
+                  代表者のみのご予約で大丈夫です
                 </p>
               </div>
 
               <div className="space-y-4">
-                <Link 
+                <Link
                   href="/liff/reserve"
                   className="block w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
                 >
                   <span className="text-xl">📅</span>
                   <span className="ml-2 text-lg">予約ページへ進む</span>
                 </Link>
-                
-                <Link 
+
+                <Link
                   href="/liff/how-to-reserve"
                   className="block w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
                 >
@@ -183,7 +204,8 @@ export default function Home() {
                   ログインが必要です
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  ゲーム予約システムをご利用いただくには<br />
+                  ゲーム予約システムをご利用いただくには
+                  <br />
                   LINEアカウントでのログインが必要です
                 </p>
               </div>
