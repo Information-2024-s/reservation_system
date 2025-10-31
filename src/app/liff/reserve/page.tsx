@@ -624,7 +624,7 @@ export default function ReservePage() {
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-gray-500 border border-gray-600"></div>
                   <span className="text-sm text-gray-600 dark:text-gray-300">
-                    予約不可 (当日枠)
+                    一般枠 (予約なし用)
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

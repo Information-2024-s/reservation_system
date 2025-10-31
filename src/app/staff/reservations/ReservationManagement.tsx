@@ -69,7 +69,10 @@ export default function ReservationManagement() {
           <h2 className="text-xl font-bold text-gray-900">予約一覧</h2>
         </div>
 
-        <ReservationTable initialReservations={reservations} />
+        <ReservationTable 
+          initialReservations={reservations} 
+          onRefresh={fetchReservations}
+        />
       </div>
 
       {/* 統計情報 */}

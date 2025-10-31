@@ -94,40 +94,6 @@ export default function ReservationConfirmation({
           </p>
         </div>
 
-        {/* チーム情報 */}
-        {team && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              チーム名
-            </p>
-            <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              {team.name}
-            </p>
-
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              メンバー数: {team.headcount}人
-            </p>
-
-            {team.players.length > 0 && (
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  メンバー:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {team.players.map((user, index) => (
-                    <span
-                      key={user.id}
-                      className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
-                    >
-                      {user.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* 予約ID */}
         <div className="mb-4">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">

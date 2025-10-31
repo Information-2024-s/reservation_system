@@ -35,13 +35,20 @@ interface Reservation {
 
 interface Props {
   initialReservations: Reservation[];
+  onRefresh?: () => void;
 }
 
-export default function ReservationTable({ initialReservations }: Props) {
+export default function ReservationTable({ initialReservations, onRefresh }: Props) {
   const [filterStatus, setFilterStatus] = useState<"all" | "upcoming" | "past">("upcoming");
   const [isPending, startTransition] = useTransition();
   const [fetchingLineUser, setFetchingLineUser] = useState<number | null>(null);
+  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const router = useRouter();
+
+  // initialReservationsが変更されたら、ローカル状態も更新
+  useMemo(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
 
   // 現在時刻を固定（ハイドレーションエラー回避）
   const now = useMemo(() => new Date(), []);
@@ -71,30 +78,60 @@ export default function ReservationTable({ initialReservations }: Props) {
 
     try {
       await deleteReservationById(id);
+      
+      // 楽観的UI更新: ローカル状態から削除
+      setReservations(prev => prev.filter(r => r.id !== id));
+      
       alert("予約を削除しました");
       
-      // ページをリフレッシュして最新データを取得
-      startTransition(() => {
-        router.refresh();
-      });
+      // サーバーデータを再取得（念のため）
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "削除に失敗しました");
+      // エラー時はサーバーから再取得
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 
   const handleMarkAsCalled = async (id: number) => {
     try {
       console.log(`呼ぶボタンクリック: ID=${id}`);
+      
+      // 楽観的UI更新: ローカル状態を即座に更新
+      setReservations(prev => 
+        prev.map(r => 
+          r.id === id 
+            ? { ...r, callStatus: "CALLED" as const, calledAt: new Date().toISOString() }
+            : r
+        )
+      );
+      
       await markReservationAsCalled(id);
       console.log(`呼び出し成功: ID=${id}`);
       
-      // ページをリフレッシュ
-      startTransition(() => {
-        router.refresh();
-      });
+      // サーバーデータを再取得（念のため）
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (err) {
       console.error(`呼び出しエラー: ID=${id}`, err);
       alert(err instanceof Error ? err.message : "更新に失敗しました");
+      // エラー時はサーバーから再取得
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 
@@ -104,31 +141,65 @@ export default function ReservationTable({ initialReservations }: Props) {
     }
 
     try {
+      // 楽観的UI更新
+      setReservations(prev => 
+        prev.map(r => 
+          r.id === id 
+            ? { ...r, callStatus: "NO_SHOW" as const }
+            : r
+        )
+      );
+      
       await markReservationAsNoShow(id);
       
-      // ページをリフレッシュ
-      startTransition(() => {
-        router.refresh();
-      });
+      // サーバーデータを再取得
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "更新に失敗しました");
+      // エラー時はサーバーから再取得
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 
   const handleResetCallStatus = async (id: number) => {
     try {
+      // 楽観的UI更新
+      setReservations(prev => 
+        prev.map(r => 
+          r.id === id 
+            ? { ...r, callStatus: "NOT_CALLED" as const, calledAt: null }
+            : r
+        )
+      );
+      
       await resetCallStatus(id);
       
-      // ページをリフレッシュ
-      startTransition(() => {
-        router.refresh();
-      });
+      // サーバーデータを再取得
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "リセットに失敗しました");
+      // エラー時はサーバーから再取得
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 
-  const filteredReservations = initialReservations.filter((reservation) => {
+  const filteredReservations = reservations.filter((reservation) => {
     const reservationTime = new Date(reservation.timeSlot?.slotTime || reservation.startTime);
 
     if (filterStatus === "upcoming") {
@@ -142,8 +213,15 @@ export default function ReservationTable({ initialReservations }: Props) {
   const sortedReservations = [...filteredReservations].sort((a, b) => {
     const timeA = new Date(a.timeSlot?.slotTime || a.startTime).getTime();
     const timeB = new Date(b.timeSlot?.slotTime || b.startTime).getTime();
-    return timeB - timeA; // 新しい順
+    return timeA - timeB; // 予約日時順（古い順から新しい順）
   });
+
+  // 現在時刻の前後5分以内かチェックする関数
+  const isNearCurrentTime = (reservationTime: Date) => {
+    const diff = reservationTime.getTime() - now.getTime();
+    const fiveMinutes = 5 * 60 * 1000; // 5分をミリ秒に変換
+    return diff >= -fiveMinutes && diff <= fiveMinutes;
+  };
 
   return (
     <>
@@ -157,7 +235,7 @@ export default function ReservationTable({ initialReservations }: Props) {
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
-          すべて ({initialReservations.length})
+          すべて ({reservations.length})
         </button>
         <button
           onClick={() => setFilterStatus("upcoming")}
@@ -169,7 +247,7 @@ export default function ReservationTable({ initialReservations }: Props) {
         >
           今後の予約 (
           {
-            initialReservations.filter(
+            reservations.filter(
               (r) => new Date(r.timeSlot?.slotTime || r.startTime) >= new Date()
             ).length
           }
@@ -185,14 +263,20 @@ export default function ReservationTable({ initialReservations }: Props) {
         >
           過去の予約 (
           {
-            initialReservations.filter(
+            reservations.filter(
               (r) => new Date(r.timeSlot?.slotTime || r.startTime) < new Date()
             ).length
           }
           )
         </button>
         <button
-          onClick={() => router.refresh()}
+          onClick={() => {
+            if (onRefresh) {
+              onRefresh();
+            } else {
+              router.refresh();
+            }
+          }}
           disabled={isPending}
           className="ml-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
@@ -218,13 +302,7 @@ export default function ReservationTable({ initialReservations }: Props) {
                   予約日時
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  スロットタイプ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   呼び出し状態
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ステータス
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   LINE ID
@@ -243,9 +321,20 @@ export default function ReservationTable({ initialReservations }: Props) {
                   reservation.timeSlot?.slotTime || reservation.startTime
                 );
                 const isPast = reservationTime < now;
+                const isNear = isNearCurrentTime(reservationTime);
+
+                // 行の背景色を決定
+                let rowClassName = "";
+                if (isNear && !isPast) {
+                  rowClassName = "bg-yellow-50 border-l-4 border-yellow-400"; // 現在時刻付近（進行中）
+                } else if (isPast) {
+                  rowClassName = "bg-gray-50"; // 過去
+                } else {
+                  rowClassName = ""; // 未来
+                }
 
                 return (
-                  <tr key={reservation.id} className={isPast ? "bg-gray-50" : ""}>
+                  <tr key={reservation.id} className={rowClassName}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       #{reservation.id}
                     </td>
@@ -254,19 +343,9 @@ export default function ReservationTable({ initialReservations }: Props) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {format(reservationTime, "yyyy年M月d日(E) HH:mm", { locale: ja })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {reservation.timeSlot?.slotType === "RESERVABLE" ? (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                          予約枠
-                        </span>
-                      ) : reservation.timeSlot?.slotType === "WALK_IN" ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                          当日受付
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          不明
+                      {isNear && !isPast && (
+                        <span className="ml-2 px-2 py-0.5 bg-yellow-200 text-yellow-900 rounded text-xs font-semibold">
+                          ⏰ now
                         </span>
                       )}
                     </td>
@@ -282,17 +361,6 @@ export default function ReservationTable({ initialReservations }: Props) {
                       ) : (
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
                           ⏱ 未呼出
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {isPast ? (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          終了
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                          予約済み
                         </span>
                       )}
                     </td>
