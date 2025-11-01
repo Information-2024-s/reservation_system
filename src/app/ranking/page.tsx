@@ -52,6 +52,7 @@ function RankingContent() {
   const intervalSeconds = parseInt(searchParams.get("interval") || "10", 10); // デフォルト10秒
   const refreshInterval = parseInt(searchParams.get("refresh") || "30", 10); // データ再取得間隔(秒)、デフォルト30秒
   const showQrCode = searchParams.get("qrcode") === "true"; // QRコード表示フラグ
+  const limitParam = parseInt(searchParams.get("limit") || "10", 10); // 表示件数、デフォルト10件
 
   // QRコード生成
   useEffect(() => {
@@ -72,19 +73,28 @@ function RankingContent() {
   // 画面の高さに基づいて表示可能な項目数を計算
   useEffect(() => {
     const calculateItemsToShow = () => {
+      // limitパラメータが指定されている場合はそれを使用
+      if (limitParam) {
+        console.log(
+          `[Limit Parameter] Using limit from query parameter: ${limitParam}`
+        );
+        setItemsToFetch(limitParam);
+        return;
+      }
+
       const windowHeight = window.innerHeight;
 
       // より正確な計算のため、実際の固定要素の高さを考慮
       // タイトル部分
-      const titleHeight = 140;
+      const titleHeight = 90;
       // タブ部分
-      const tabHeight = 80;
+      const tabHeight = 50;
       // テーブルヘッダー
-      const tableHeaderHeight = 50;
+      const tableHeaderHeight = 40;
       // 統計情報
-      const statsHeight = 180;
+      const statsHeight = 150;
       // 上下のパディング
-      const paddingHeight = 100;
+      const paddingHeight = 60;
 
       const headerFooterHeight =
         titleHeight +
@@ -94,9 +104,9 @@ function RankingContent() {
         paddingHeight;
       const availableHeight = windowHeight - headerFooterHeight;
 
-      // テーブル行の高さ（実測に基づく）
-      // px-5 py-4 なので、縦方向パディングは約32px、コンテンツ約30px = 約62px
-      const rowHeight = 62;
+      // テーブル行の高さ（詰めた後の実測に基づく）
+      // px-3 py-2 なので、縦方向パディングは約16px、コンテンツ約24px = 約40px
+      const rowHeight = 40;
 
       const itemsPerScreen = Math.floor(availableHeight / rowHeight);
 
@@ -116,7 +126,7 @@ function RankingContent() {
     // ウィンドウのリサイズ時に再計算
     window.addEventListener("resize", calculateItemsToShow);
     return () => window.removeEventListener("resize", calculateItemsToShow);
-  }, []);
+  }, [limitParam]);
 
   // 自動タブ切り替え
   useEffect(() => {
@@ -322,7 +332,7 @@ function RankingContent() {
           <thead>
             <tr className="bg-[rgba(74,144,226,0.1)] border-b border-[rgba(74,144,226,0.2)]">
               <th
-                className="px-5 py-3 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                className="px-3 py-2 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
                 style={{
                   fontFamily: "system-ui, sans-serif",
                   letterSpacing: "0.05em",
@@ -332,7 +342,7 @@ function RankingContent() {
                 順位
               </th>
               <th
-                className="px-5 py-3 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                className="px-3 py-2 text-left font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
                 style={{
                   fontFamily: "system-ui, sans-serif",
                   letterSpacing: "0.05em",
@@ -342,7 +352,7 @@ function RankingContent() {
                 チーム名
               </th>
               <th
-                className="px-5 py-3 text-right font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
+                className="px-3 py-2 text-right font-bold text-[#4a90e2] text-xs uppercase tracking-wider"
                 style={{
                   fontFamily: "system-ui, sans-serif",
                   letterSpacing: "0.05em",
@@ -363,7 +373,7 @@ function RankingContent() {
                     : "bg-[rgba(255,255,255,0.01)]"
                 } hover:bg-[rgba(74,144,226,0.05)]`}
               >
-                <td className="px-5 py-4 align-middle">
+                <td className="px-3 py-2 align-middle">
                   <div className="flex items-center gap-2">
                     <span
                       className={`rank-number w-10 h-10 rounded-lg grid place-items-center text-sm font-semibold tracking-wider uppercase transition-all duration-250 ${
@@ -392,11 +402,11 @@ function RankingContent() {
                     </span>
                   </div>
                 </td>
-                <td className="px-5 py-4 font-semibold text-white align-middle">
+                <td className="px-3 py-2 font-semibold text-white align-middle">
                   {ranking.teamName}
                 </td>
                 <td
-                  className="score-number px-5 py-4 text-right font-bold text-white text-base align-middle"
+                  className="score-number px-3 py-2 text-right font-bold text-white text-base align-middle"
                   style={{ textShadow: "0 0 8px rgba(74, 144, 226, 0.3)" }}
                 >
                   {ranking.totalScore.toLocaleString()}
@@ -470,7 +480,7 @@ function RankingContent() {
         )}
 
         {/* タイトル */}
-        <header className="text-center mb-6">
+        <header className="text-center mb-3">
           <h1
             className="font-title text-5xl md:text-6xl font-extrabold text-[#e0f0ff] uppercase tracking-wider"
             style={{
@@ -485,13 +495,13 @@ function RankingContent() {
 
         {/* タブナビゲーション */}
         <nav
-          className="flex justify-around mb-8"
+          className="flex justify-around mb-4"
           role="tablist"
           aria-label="チームタイプ切替"
         >
           <button
             onClick={() => setActiveTab("team1")}
-            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+            className={`px-3 py-2 font-semibold text-base uppercase tracking-wider transition-colors duration-200 relative ${
               activeTab === "team1"
                 ? "text-white"
                 : "text-white/70 hover:text-white"
@@ -508,7 +518,7 @@ function RankingContent() {
           </button>
           <button
             onClick={() => setActiveTab("team2")}
-            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+            className={`px-3 py-2 font-semibold text-base uppercase tracking-wider transition-colors duration-200 relative ${
               activeTab === "team2"
                 ? "text-white"
                 : "text-white/70 hover:text-white"
@@ -525,7 +535,7 @@ function RankingContent() {
           </button>
           <button
             onClick={() => setActiveTab("team3")}
-            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+            className={`px-3 py-2 font-semibold text-base uppercase tracking-wider transition-colors duration-200 relative ${
               activeTab === "team3"
                 ? "text-white"
                 : "text-white/70 hover:text-white"
@@ -542,7 +552,7 @@ function RankingContent() {
           </button>
           <button
             onClick={() => setActiveTab("team4")}
-            className={`px-4 py-3 font-semibold text-lg uppercase tracking-wider transition-colors duration-200 relative ${
+            className={`px-3 py-2 font-semibold text-base uppercase tracking-wider transition-colors duration-200 relative ${
               activeTab === "team4"
                 ? "text-white"
                 : "text-white/70 hover:text-white"
@@ -561,7 +571,7 @@ function RankingContent() {
 
         {/* ランキング表示エリア */}
         <main
-          className="p-7 relative"
+          className="p-4 relative"
           style={{
             background: "rgba(255, 255, 255, 0.03)",
             backdropFilter: "blur(20px) saturate(180%)",
@@ -584,7 +594,7 @@ function RankingContent() {
           />
 
           <h2
-            className="text-xl font-semibold text-white mb-5 tracking-wider uppercase"
+            className="text-lg font-semibold text-white mb-3 tracking-wider uppercase"
             id="panel-title"
             style={{
               fontFamily: "system-ui, sans-serif",
