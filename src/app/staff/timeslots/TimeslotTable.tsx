@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateTimeSlotStatus } from "./actions";
+import { updateTimeSlotStatus, updateTimeSlotType } from "./actions";
 
 type TimeSlot = {
   id: number;
@@ -17,29 +17,62 @@ type TimeslotTableProps = {
   initialTimeslots: TimeSlot[];
 };
 
-export default function TimeslotTable({ initialTimeslots }: TimeslotTableProps) {
+export default function TimeslotTable({
+  initialTimeslots,
+}: TimeslotTableProps) {
   const [timeslots, setTimeslots] = useState<TimeSlot[]>(initialTimeslots);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingTypeId, setUpdatingTypeId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStatusToggle = async (id: number, currentStatus: "AVAILABLE" | "BOOKED" | "UNAVAILABLE") => {
+  const handleStatusToggle = async (
+    id: number,
+    currentStatus: "AVAILABLE" | "BOOKED" | "UNAVAILABLE"
+  ) => {
     setUpdatingId(id);
     setError(null);
-    
+
     // AVAILABLE ↔ UNAVAILABLE の切り替え
-    const newStatus = currentStatus === "AVAILABLE" ? "UNAVAILABLE" : "AVAILABLE";
+    const newStatus =
+      currentStatus === "AVAILABLE" ? "UNAVAILABLE" : "AVAILABLE";
 
     try {
       const updated = await updateTimeSlotStatus(id, newStatus);
-      
+
       setTimeslots((prev) =>
         prev.map((slot) => (slot.id === id ? updated : slot))
       );
     } catch (e) {
-      console.error('ステータス更新エラー:', e);
-      setError(e instanceof Error ? e.message : 'ステータスの更新に失敗しました');
+      console.error("ステータス更新エラー:", e);
+      setError(
+        e instanceof Error ? e.message : "ステータスの更新に失敗しました"
+      );
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleTypeToggle = async (
+    id: number,
+    currentType: "RESERVABLE" | "WALK_IN"
+  ) => {
+    setUpdatingTypeId(id);
+    setError(null);
+
+    // RESERVABLE ↔ WALK_IN の切り替え
+    const newType = currentType === "RESERVABLE" ? "WALK_IN" : "RESERVABLE";
+
+    try {
+      const updated = await updateTimeSlotType(id, newType);
+
+      setTimeslots((prev) =>
+        prev.map((slot) => (slot.id === id ? updated : slot))
+      );
+    } catch (e) {
+      console.error("タイプ更新エラー:", e);
+      setError(e instanceof Error ? e.message : "タイプの更新に失敗しました");
+    } finally {
+      setUpdatingTypeId(null);
     }
   };
 
@@ -153,45 +186,87 @@ export default function TimeslotTable({ initialTimeslots }: TimeslotTableProps) 
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => handleStatusToggle(slot.id, slot.status)}
-                      disabled={updatingId === slot.id}
-                      className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                        slot.status === "AVAILABLE"
-                          ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-                          : "bg-green-600 hover:bg-green-700 text-white"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {updatingId === slot.id ? (
-                        <span className="flex items-center">
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          更新中...
-                        </span>
-                      ) : slot.status === "AVAILABLE" ? (
-                        "利用不可に変更"
-                      ) : (
-                        "利用可能に変更"
-                      )}
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => handleStatusToggle(slot.id, slot.status)}
+                        disabled={updatingId === slot.id}
+                        className={`px-4 py-2 rounded-md font-medium transition-colors text-sm ${
+                          slot.status === "AVAILABLE"
+                            ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                            : "bg-green-600 hover:bg-green-700 text-white"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {updatingId === slot.id ? (
+                          <span className="flex items-center">
+                            <svg
+                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            更新中...
+                          </span>
+                        ) : slot.status === "AVAILABLE" ? (
+                          "利用不可に変更"
+                        ) : (
+                          "利用可能に変更"
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleTypeToggle(slot.id, slot.slotType)}
+                        disabled={updatingTypeId === slot.id}
+                        className={`px-4 py-2 rounded-md font-medium transition-colors text-sm ${
+                          slot.slotType === "RESERVABLE"
+                            ? "bg-purple-500 hover:bg-purple-600 text-white"
+                            : "bg-orange-500 hover:bg-orange-600 text-white"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {updatingTypeId === slot.id ? (
+                          <span className="flex items-center">
+                            <svg
+                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            切り替え中...
+                          </span>
+                        ) : slot.slotType === "RESERVABLE" ? (
+                          "一般枠に変更"
+                        ) : (
+                          "予約枠に変更"
+                        )}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

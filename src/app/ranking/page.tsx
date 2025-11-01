@@ -630,7 +630,7 @@ function RankingContent() {
                 className="text-xs font-bold text-[#4a90e2] uppercase tracking-wider"
                 style={{ letterSpacing: "0.05em" }}
               >
-                TEAM SCORES
+                チーム数
               </div>
               <div
                 className="score-number text-5xl font-extrabold text-white leading-none"
@@ -667,7 +667,7 @@ function RankingContent() {
                 className="text-xs font-bold text-[#4a90e2] uppercase tracking-wider"
                 style={{ letterSpacing: "0.05em" }}
               >
-                PLAYER SCORES
+                プレイ人数
               </div>
               <div
                 className="score-number text-5xl font-extrabold text-white leading-none"

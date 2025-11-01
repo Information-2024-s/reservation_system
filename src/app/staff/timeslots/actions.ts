@@ -18,8 +18,8 @@ export type TimeSlot = {
  */
 export async function getAllTimeSlots(): Promise<TimeSlot[]> {
   try {
-    console.log('=== getAllTimeSlots: 開始 ===');
-    
+    console.log("=== getAllTimeSlots: 開始 ===");
+
     const timeSlots = await prisma.timeSlot.findMany({
       include: {
         reservation: true,
@@ -39,14 +39,20 @@ export async function getAllTimeSlots(): Promise<TimeSlot[]> {
       updatedAt: slot.updatedAt.toISOString(),
       hasReservation: slot.reservation !== null,
     }));
-    
-    console.log('=== getAllTimeSlots: 成功 ===');
+
+    console.log("=== getAllTimeSlots: 成功 ===");
     return formattedTimeSlots;
   } catch (error) {
     console.error("=== getAllTimeSlots: エラー ===");
     console.error("Failed to fetch timeslots:", error);
-    console.error("Error details:", error instanceof Error ? error.message : String(error));
-    console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
+    console.error(
+      "Error details:",
+      error instanceof Error ? error.message : String(error)
+    );
+    console.error(
+      "Stack trace:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
     throw new Error("タイムスロットの取得に失敗しました");
   }
 }
@@ -59,8 +65,10 @@ export async function updateTimeSlotStatus(
   status: "AVAILABLE" | "UNAVAILABLE"
 ): Promise<TimeSlot> {
   try {
-    console.log(`=== updateTimeSlotStatus: 開始 ID=${id}, Status=${status} ===`);
-    
+    console.log(
+      `=== updateTimeSlotStatus: 開始 ID=${id}, Status=${status} ===`
+    );
+
     // タイムスロットの存在確認
     const existingSlot = await prisma.timeSlot.findUnique({
       where: { id },
@@ -91,10 +99,10 @@ export async function updateTimeSlotStatus(
     });
 
     console.log(`タイムスロットを更新しました: ID=${id}`, updatedSlot);
-    
+
     // キャッシュを明示的に再検証
     revalidatePath("/staff/timeslots");
-    
+
     const formattedSlot = {
       id: updatedSlot.id,
       slotTime: updatedSlot.slotTime.toISOString(),
@@ -109,8 +117,82 @@ export async function updateTimeSlotStatus(
   } catch (error) {
     console.error("=== updateTimeSlotStatus: エラー ===");
     console.error("Failed to update timeslot status:", error);
-    console.error("Error details:", error instanceof Error ? error.message : String(error));
-    console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
-    throw error instanceof Error ? error : new Error("ステータスの更新に失敗しました");
+    console.error(
+      "Error details:",
+      error instanceof Error ? error.message : String(error)
+    );
+    console.error(
+      "Stack trace:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    throw error instanceof Error
+      ? error
+      : new Error("ステータスの更新に失敗しました");
+  }
+}
+
+/**
+ * スタッフ用：タイムスロットのタイプ（予約枠/一般枠）を切り替え
+ */
+export async function updateTimeSlotType(
+  id: number,
+  slotType: "RESERVABLE" | "WALK_IN"
+): Promise<TimeSlot> {
+  try {
+    console.log(`=== updateTimeSlotType: 開始 ID=${id}, Type=${slotType} ===`);
+
+    // タイムスロットの存在確認
+    const existingSlot = await prisma.timeSlot.findUnique({
+      where: { id },
+      include: {
+        reservation: true,
+      },
+    });
+
+    if (!existingSlot) {
+      console.error(`タイムスロットが見つかりません: ID=${id}`);
+      throw new Error("タイムスロットが見つかりません");
+    }
+
+    console.log(`既存のタイムスロット:`, existingSlot);
+
+    const updatedSlot = await prisma.timeSlot.update({
+      where: { id },
+      data: { slotType },
+      include: {
+        reservation: true,
+      },
+    });
+
+    console.log(`タイムスロットタイプを更新しました: ID=${id}`, updatedSlot);
+
+    // キャッシュを明示的に再検証
+    revalidatePath("/staff/timeslots");
+
+    const formattedSlot = {
+      id: updatedSlot.id,
+      slotTime: updatedSlot.slotTime.toISOString(),
+      slotType: updatedSlot.slotType,
+      status: updatedSlot.status,
+      createdAt: updatedSlot.createdAt.toISOString(),
+      updatedAt: updatedSlot.updatedAt.toISOString(),
+      hasReservation: updatedSlot.reservation !== null,
+    };
+
+    return formattedSlot;
+  } catch (error) {
+    console.error("=== updateTimeSlotType: エラー ===");
+    console.error("Failed to update timeslot type:", error);
+    console.error(
+      "Error details:",
+      error instanceof Error ? error.message : String(error)
+    );
+    console.error(
+      "Stack trace:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    throw error instanceof Error
+      ? error
+      : new Error("タイプの更新に失敗しました");
   }
 }
