@@ -161,7 +161,11 @@ export default function Home() {
                   <br />
                   代表者のみのご予約で大丈夫です
                 </p>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  5人以上の場合は、2と3などに分けてご予約ください
+                </p>
               </div>
+              <div></div>
 
               <div className="space-y-4">
                 <Link
