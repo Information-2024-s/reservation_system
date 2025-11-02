@@ -16,11 +16,11 @@ export default function ReservationManagement() {
     setError(null);
     try {
       const data = await getAllReservations();
-      console.log('ReservationManagement: 予約取得成功', data.length);
+      console.log("ReservationManagement: 予約取得成功", data.length);
       setReservations(data);
     } catch (e) {
-      console.error('ReservationManagement: 予約取得エラー', e);
-      setError(e instanceof Error ? e.message : '予約の取得に失敗しました');
+      console.error("ReservationManagement: 予約取得エラー", e);
+      setError(e instanceof Error ? e.message : "予約の取得に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -69,8 +69,8 @@ export default function ReservationManagement() {
           <h2 className="text-xl font-bold text-gray-900">予約一覧</h2>
         </div>
 
-        <ReservationTable 
-          initialReservations={reservations} 
+        <ReservationTable
+          initialReservations={reservations}
           onRefresh={fetchReservations}
         />
       </div>
@@ -79,15 +79,30 @@ export default function ReservationManagement() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white shadow rounded-lg p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-2">総予約数</h3>
-          <p className="text-3xl font-bold text-gray-900">{reservations.length}</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {reservations.length}
+          </p>
         </div>
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-2">今後の予約</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            今後の予約（10分以内含む）
+          </h3>
           <p className="text-3xl font-bold text-blue-600">
             {
-              reservations.filter(
-                (r) => new Date(r.timeSlot?.slotTime || r.startTime) >= new Date()
-              ).length
+              reservations.filter((r) => {
+                const now = new Date();
+                const tenMinutesFromNow = new Date(
+                  now.getTime() + 10 * 60 * 1000
+                );
+                const reservationTime = new Date(
+                  r.timeSlot?.slotTime || r.startTime
+                );
+                return (
+                  reservationTime >= now ||
+                  (reservationTime >= now &&
+                    reservationTime <= tenMinutesFromNow)
+                );
+              }).length
             }
           </p>
         </div>
@@ -96,7 +111,8 @@ export default function ReservationManagement() {
           <p className="text-3xl font-bold text-gray-600">
             {
               reservations.filter(
-                (r) => new Date(r.timeSlot?.slotTime || r.startTime) < new Date()
+                (r) =>
+                  new Date(r.timeSlot?.slotTime || r.startTime) < new Date()
               ).length
             }
           </p>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { 
-  deleteReservationById, 
-  markReservationAsCalled, 
+import {
+  deleteReservationById,
+  markReservationAsCalled,
   markReservationAsNoShow,
-  resetCallStatus 
+  resetCallStatus,
 } from "./actions";
 import { useRouter } from "next/navigation";
 
@@ -38,11 +38,17 @@ interface Props {
   onRefresh?: () => void;
 }
 
-export default function ReservationTable({ initialReservations, onRefresh }: Props) {
-  const [filterStatus, setFilterStatus] = useState<"all" | "upcoming" | "past">("upcoming");
+export default function ReservationTable({
+  initialReservations,
+  onRefresh,
+}: Props) {
+  const [filterStatus, setFilterStatus] = useState<"all" | "upcoming" | "past">(
+    "upcoming"
+  );
   const [isPending, startTransition] = useTransition();
   const [fetchingLineUser, setFetchingLineUser] = useState<number | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+  const [reservations, setReservations] =
+    useState<Reservation[]>(initialReservations);
   const router = useRouter();
 
   // initialReservationsが変更されたら、ローカル状態も更新
@@ -53,7 +59,25 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
   // 現在時刻を固定（ハイドレーションエラー回避）
   const now = useMemo(() => new Date(), []);
 
-  const handleFetchLineUserName = async (lineUserId: string, reservationId: number) => {
+  // 1分ごとに予約データを更新
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
+    }, 60 * 1000); // 60秒（1分）ごと
+
+    return () => clearInterval(interval);
+  }, [onRefresh, router]);
+
+  const handleFetchLineUserName = async (
+    lineUserId: string,
+    reservationId: number
+  ) => {
     setFetchingLineUser(reservationId);
     try {
       const response = await fetch(`/api/line/profile/${lineUserId}`);
@@ -65,7 +89,9 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
         throw new Error(data.error || "ユーザー情報の取得に失敗しました");
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "ユーザー情報の取得に失敗しました");
+      alert(
+        err instanceof Error ? err.message : "ユーザー情報の取得に失敗しました"
+      );
     } finally {
       setFetchingLineUser(null);
     }
@@ -78,12 +104,12 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
 
     try {
       await deleteReservationById(id);
-      
+
       // 楽観的UI更新: ローカル状態から削除
-      setReservations(prev => prev.filter(r => r.id !== id));
-      
+      setReservations((prev) => prev.filter((r) => r.id !== id));
+
       alert("予約を削除しました");
-      
+
       // サーバーデータを再取得（念のため）
       if (onRefresh) {
         onRefresh();
@@ -104,19 +130,23 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
   const handleMarkAsCalled = async (id: number) => {
     try {
       console.log(`呼ぶボタンクリック: ID=${id}`);
-      
+
       // 楽観的UI更新: ローカル状態を即座に更新
-      setReservations(prev => 
-        prev.map(r => 
-          r.id === id 
-            ? { ...r, callStatus: "CALLED" as const, calledAt: new Date().toISOString() }
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                callStatus: "CALLED" as const,
+                calledAt: new Date().toISOString(),
+              }
             : r
         )
       );
-      
+
       await markReservationAsCalled(id);
       console.log(`呼び出し成功: ID=${id}`);
-      
+
       // サーバーデータを再取得（念のため）
       if (onRefresh) {
         onRefresh();
@@ -142,16 +172,14 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
 
     try {
       // 楽観的UI更新
-      setReservations(prev => 
-        prev.map(r => 
-          r.id === id 
-            ? { ...r, callStatus: "NO_SHOW" as const }
-            : r
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, callStatus: "NO_SHOW" as const } : r
         )
       );
-      
+
       await markReservationAsNoShow(id);
-      
+
       // サーバーデータを再取得
       if (onRefresh) {
         onRefresh();
@@ -172,16 +200,16 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
   const handleResetCallStatus = async (id: number) => {
     try {
       // 楽観的UI更新
-      setReservations(prev => 
-        prev.map(r => 
-          r.id === id 
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.id === id
             ? { ...r, callStatus: "NOT_CALLED" as const, calledAt: null }
             : r
         )
       );
-      
+
       await resetCallStatus(id);
-      
+
       // サーバーデータを再取得
       if (onRefresh) {
         onRefresh();
@@ -200,12 +228,21 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
   };
 
   const filteredReservations = reservations.filter((reservation) => {
-    const reservationTime = new Date(reservation.timeSlot?.slotTime || reservation.startTime);
+    const reservationTime = new Date(
+      reservation.timeSlot?.slotTime || reservation.startTime
+    );
+    const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000); // 現在時刻から10分後
 
     if (filterStatus === "upcoming") {
-      return reservationTime >= now;
+      // 現在時刻以降、または現在時刻から10分以内の予約を表示
+      return (
+        reservationTime >= now ||
+        (reservationTime < now &&
+          reservationTime >= new Date(now.getTime() - 10 * 60 * 1000))
+      );
     } else if (filterStatus === "past") {
-      return reservationTime < now;
+      // 現在時刻より10分以上前の予約を表示
+      return reservationTime < new Date(now.getTime() - 10 * 60 * 1000);
     }
     return true;
   });
@@ -245,11 +282,19 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
-          今後の予約 (
+          今後の予約（10分以内含む）(
           {
-            reservations.filter(
-              (r) => new Date(r.timeSlot?.slotTime || r.startTime) >= new Date()
-            ).length
+            reservations.filter((r) => {
+              const reservationTime = new Date(
+                r.timeSlot?.slotTime || r.startTime
+              );
+              const now = new Date();
+              return (
+                reservationTime >= now ||
+                (reservationTime < now &&
+                  reservationTime >= new Date(now.getTime() - 10 * 60 * 1000))
+              );
+            }).length
           }
           )
         </button>
@@ -261,11 +306,15 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
-          過去の予約 (
+          過去の予約（10分以前）(
           {
-            reservations.filter(
-              (r) => new Date(r.timeSlot?.slotTime || r.startTime) < new Date()
-            ).length
+            reservations.filter((r) => {
+              const reservationTime = new Date(
+                r.timeSlot?.slotTime || r.startTime
+              );
+              const now = new Date();
+              return reservationTime < new Date(now.getTime() - 10 * 60 * 1000);
+            }).length
           }
           )
         </button>
@@ -342,7 +391,9 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                       {reservation.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(reservationTime, "yyyy年M月d日(E) HH:mm", { locale: ja })}
+                      {format(reservationTime, "yyyy年M月d日(E) HH:mm", {
+                        locale: ja,
+                      })}
                       {isNear && !isPast && (
                         <span className="ml-2 px-2 py-0.5 bg-yellow-200 text-yellow-900 rounded text-xs font-semibold">
                           ⏰ now
@@ -367,16 +418,20 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {reservation.lineUserId ? (
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs">
-                            {reservation.lineUserId.substring(0, 12)}...
-                          </span>
                           <button
-                            onClick={() => handleFetchLineUserName(reservation.lineUserId!, reservation.id)}
+                            onClick={() =>
+                              handleFetchLineUserName(
+                                reservation.lineUserId!,
+                                reservation.id
+                              )
+                            }
                             disabled={fetchingLineUser === reservation.id}
                             className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-xs whitespace-nowrap"
                             title="LINE表示名を取得"
                           >
-                            {fetchingLineUser === reservation.id ? "取得中..." : "名前取得"}
+                            {fetchingLineUser === reservation.id
+                              ? "取得中..."
+                              : "名前取得"}
                           </button>
                         </div>
                       ) : (
@@ -384,7 +439,11 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(reservation.createdAt), "yyyy/M/d HH:mm", { locale: ja })}
+                      {format(
+                        new Date(reservation.createdAt),
+                        "yyyy/M/d HH:mm",
+                        { locale: ja }
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex flex-col gap-2">
@@ -392,7 +451,9 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                           <div className="flex gap-2">
                             {reservation.callStatus === "NOT_CALLED" && (
                               <button
-                                onClick={() => handleMarkAsCalled(reservation.id)}
+                                onClick={() =>
+                                  handleMarkAsCalled(reservation.id)
+                                }
                                 disabled={isPending}
                                 className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
                               >
@@ -402,14 +463,18 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                             {reservation.callStatus === "CALLED" && (
                               <>
                                 <button
-                                  onClick={() => handleMarkAsNoShow(reservation.id)}
+                                  onClick={() =>
+                                    handleMarkAsNoShow(reservation.id)
+                                  }
                                   disabled={isPending}
                                   className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
                                 >
                                   不在
                                 </button>
                                 <button
-                                  onClick={() => handleResetCallStatus(reservation.id)}
+                                  onClick={() =>
+                                    handleResetCallStatus(reservation.id)
+                                  }
                                   disabled={isPending}
                                   className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
                                 >
@@ -419,7 +484,9 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                             )}
                             {reservation.callStatus === "NO_SHOW" && (
                               <button
-                                onClick={() => handleResetCallStatus(reservation.id)}
+                                onClick={() =>
+                                  handleResetCallStatus(reservation.id)
+                                }
                                 disabled={isPending}
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
                               >
@@ -429,7 +496,9 @@ export default function ReservationTable({ initialReservations, onRefresh }: Pro
                           </div>
                         )}
                         <button
-                          onClick={() => handleDeleteReservation(reservation.id)}
+                          onClick={() =>
+                            handleDeleteReservation(reservation.id)
+                          }
                           className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap"
                           disabled={isPast || isPending}
                         >
